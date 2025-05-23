@@ -1,0 +1,21 @@
+﻿# Build dir
+build/
+
+# IDE files
+.idea/
+
+# Visual Studio / MSVC
+.vs/
+*.user
+*.suo
+
+# Temporary files
+*.tmp
+*~
+
+# Executable
+DXMiniApp.exe
+
+# System files
+Thumbs.db
+.DS_Store
