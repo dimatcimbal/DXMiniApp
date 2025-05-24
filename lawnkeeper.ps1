@@ -13,8 +13,15 @@
 #>
 
 param(
-    [switch]$Help, [switch]$Clean, [switch]$Build, [switch]$Rebuild,
-    [switch]$Generate, [switch]$Format, [switch]$CheckFormat, [switch]$All,
+    [switch]$Help,
+    [switch]$Clean,
+    [switch]$Clear, # Keep Clear as an alias
+    [switch]$Build,
+    [switch]$Rebuild,
+    [switch]$Generate,
+    [switch]$Format,
+    [switch]$CheckFormat,
+    [switch]$All,
     [string]$Generator = "",
     [ValidateSet("Debug", "Release")][string]$Config = "Release"
 )
@@ -278,10 +285,19 @@ function Invoke-CheckFormat {
 # Action Orchestration
 # ---
 function Get-Action {
-    $actions = @($Clean, $Clear, $Build, $Rebuild, $Generate, $Format, $CheckFormat, $All)
-    $actionNames = @("clean", "clean", "build", "rebuild", "generate", "format", "check-format", "all")
+    # Check if Clean or Clear is provided, and treat them as the same action
+    if ($Clean -or $Clear) {
+        $Clean = $true # Ensure Clean is true if either is provided
+        $Clear = $false # Reset Clear to avoid double counting
+    }
 
-    $activeCount = ($actions | Where-Object { $_ }).Count
+    $actions = @($Clean, $Build, $Rebuild, $Generate, $Format, $CheckFormat, $All)
+    $actionNames = @("clean", "build", "rebuild", "generate", "format", "check-format", "all")
+
+    # Filter out empty or false actions to count only truly active ones
+    $activeFlags = $actions | Where-Object { $_ -eq $true }
+    $activeCount = $activeFlags.Count
+
     if ($activeCount -gt 1) {
         Error "Multiple actions specified. Please choose only one."
         Show-Help; exit 1
@@ -290,7 +306,7 @@ function Get-Action {
     for ($i = 0; $i -lt $actions.Count; $i++) {
         if ($actions[$i]) { return $actionNames[$i] }
     }
-    return "rebuild"  # Default action
+    return "rebuild"  # Default action if no specific action is provided
 }
 
 # ---

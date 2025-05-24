@@ -35,6 +35,9 @@ target_link_libraries(DXMiniApp
     gdi32       # Graphics device interface
     kernel32    # Core Windows functions
     gdiplus     # GDI+ for anti-aliasing fonts
+    comctl32    # Common Controls (TreeView, ListBox, InitCommonControlsEx)
+    shlwapi     # Shell Light-weight Utility library (PathCombine, PathFindFileName)
+    # strsafe.h functions are generally inline or part of kernel32, no explicit lib needed.
 )
 
 # Set subsystem to Windows (removes console window)
