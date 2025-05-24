@@ -59,16 +59,40 @@ EXAMPLES:
 "@ -ForegroundColor Cyan
 }
 
+# ---
+# Early Help Exit
+# ---
+if ($Help) {
+    Show-Help
+    exit 0
+}
+
+# ---
+# Configuration
+# ---
+$BuildDir = "build"
+$ProjectName = "DXMiniApp"
+# Try to find clang-format automatically or fall back to a common path
+$ClangFormatPath = (Get-Command clang-format -EA SilentlyContinue).Source
+if (-not $ClangFormatPath) {
+    # Fallback to common VS 2022 path if not found in PATH
+    $ClangFormatPath = "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin\clang-format.exe"
+}
+$SourceExtensions = @("*.cpp", "*.c", "*.h", "*.hpp", "*.cc", "*.cxx", "*.hxx")
+
+# ---
+# Core Functions
+# ---
 function Test-Prerequisites {
-    if (-not (Test-Path "CMakeLists.txt")) { Error "CMakeLists.txt not found"; return $false }
-    if (-not (Test-Path "src")) { Error "src/ directory not found"; return $false }
+    if (-not (Test-Path "CMakeLists.txt")) { Error "CMakeLists.txt not found in current directory."; return $false }
+    if (-not (Test-Path "src")) { Error "src/ directory not found."; return $false }
     return $true
 }
 
 function Test-ClangFormat {
     if (-not (Test-Path $ClangFormatPath)) {
         Error "clang-format not found at: $ClangFormatPath"
-        Warn "Install Visual Studio 2022 with C++ tools"
+        Warn "Ensure Visual Studio with C++ tools is installed or clang-format is in your PATH."
         return $false
     }
     return $true
@@ -79,7 +103,7 @@ function Get-SourceFiles {
     foreach ($dir in @("src", "include")) {
         if (Test-Path $dir) {
             foreach ($ext in $SourceExtensions) {
-                $files += Get-ChildItem -Path $dir -Filter $ext -Recurse
+                $files += Get-ChildItem -Path $dir -Filter $ext -Recurse -File
             }
         }
     }
@@ -90,29 +114,39 @@ function Invoke-Clean {
     Log "Cleaning project..." "Cyan"
     if (Test-Path $BuildDir) {
         try {
-            Remove-Item -Recurse -Force $BuildDir
+            Remove-Item -Recurse -Force $BuildDir -ErrorAction Stop
             Success "Build directory cleaned"
             return $true
         }
         catch { Error "Failed to clean: $_"; return $false }
     }
-    Warn "Build directory doesn't exist"
+    Warn "Build directory doesn't exist, nothing to clean."
     return $true
 }
 
 function Get-Generator {
     if ($Generator) { return $Generator }
 
-    Log "Auto-detecting generator..." "Cyan"
-    if (Get-Command "ninja" -EA SilentlyContinue) { return "Ninja" }
-    if (Get-Command "mingw32-make" -EA SilentlyContinue) { return "MinGW Makefiles" }
+    Log "Auto-detecting CMake generator..." "Cyan"
 
+    # Prioritize Ninja if available
+    if (Get-Command "ninja" -EA SilentlyContinue) {
+        Log "Detected 'ninja'. Using 'Ninja' generator." "Green"
+        return "Ninja"
+    }
+
+    # Prioritize Visual Studio 2022 if vswhere is found
     $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     if (Test-Path $vsWhere) {
-        $vsInfo = & $vsWhere -latest -property displayName
-        if ($vsInfo -match "2022") { return "Visual Studio 17 2022" }
-        if ($vsInfo -match "2019") { return "Visual Studio 16 2019" }
+        $vs2022Path = & $vsWhere -latest -products Microsoft.VisualStudio.Product.Community -version "[17.0,18.0)" -property installationPath -EA SilentlyContinue
+        if ($vs2022Path) {
+            Log "Detected Visual Studio 2022. Using 'Visual Studio 17 2022' generator." "Green"
+            return "Visual Studio 17 2022"
+        }
     }
+
+    # Fallback if no specific preference or detection
+    Warn "No preferred generator (Ninja, VS 2022) auto-detected. CMake will choose default."
     return ""
 }
 
@@ -121,24 +155,22 @@ function Invoke-Generate {
 
     if (-not (Test-Path $BuildDir)) {
         New-Item -ItemType Directory -Path $BuildDir | Out-Null
-        Log "Created build directory"
+        Log "Created build directory: .$BuildDir"
     }
 
     Push-Location $BuildDir
     try {
         $gen = Get-Generator
-        Log "Using generator: $gen"
-
         $args = @("..")
         if ($gen) { $args += @("-G", $gen) }
-        
+
         $output = & cmake $args 2>&1
-        if ($LASTEXITCODE -ne 0) { 
-            Error "Configuration failed:"
-            $output | ForEach-Object { Write-Host $_ -ForegroundColor Red }
-            throw "Configuration failed" 
+        if ($LASTEXITCODE -ne 0) {
+            Error "CMake configuration failed:"
+            $output | ForEach-Object { Write-Host "  [CMAKE] $_" -ForegroundColor Red }
+            throw "Configuration failed"
         }
-        
+
         Success "Project files generated"
         return $true
     }
@@ -150,26 +182,24 @@ function Invoke-Build {
     Log "Building project ($Config)..." "Cyan"
 
     if (-not (Test-Path "$BuildDir/CMakeCache.txt")) {
-        Warn "Project files not found, generating..."
+        Warn "Project files not found, attempting to generate..."
         if (-not (Invoke-Generate)) { return $false }
     }
 
     Push-Location $BuildDir
     try {
         $output = & cmake --build . --config $Config 2>&1
-        if ($LASTEXITCODE -ne 0) { 
+        if ($LASTEXITCODE -ne 0) {
             Error "Build failed:"
-            $output | ForEach-Object { Write-Host $_ -ForegroundColor Red }
-            throw "Build failed" 
+            $output | ForEach-Object { Write-Host "  [CMAKE] $_" -ForegroundColor Red }
+            throw "Build failed"
         }
-        
+
         Success "Build completed"
 
         # Show executable location
-        $exePaths = @("bin\$ProjectName.exe", "$Config\$ProjectName.exe", "$ProjectName.exe")
-        foreach ($path in $exePaths) {
-            if (Test-Path $path) { Log "Executable: $PWD\$path" "Green"; break }
-        }
+        $exePath = Get-ChildItem -Path ".\bin", ".\$Config" -Filter "$ProjectName.exe" -Recurse -File | Select-Object -ExpandProperty FullName -First 1
+        if ($exePath) { Log "Executable: $exePath" "Green" }
         return $true
     }
     catch { Error "Build failed: $_"; return $false }
@@ -181,24 +211,32 @@ function Invoke-Format {
     if (-not (Test-ClangFormat)) { return $false }
 
     $files = Get-SourceFiles
-    if (-not $files) { Warn "No source files found"; return $true }
+    if (-not $files) { Warn "No source files found to format."; return $true }
 
-    $formatted = 0
-    $errors = 0
+    $formattedCount = 0
+    $failedCount = 0
 
     foreach ($file in $files) {
         try {
-            & $ClangFormatPath -i $file.FullName
-            if ($LASTEXITCODE -eq 0) { $formatted++ } else { Error "Failed: $($file.Name)"; $errors++ }
+            & $ClangFormatPath -i $file.FullName > $null 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $formattedCount++
+            } else {
+                Warn "Failed to format: $($file.Name) (Exit Code: $LASTEXITCODE)"
+                $failedCount++
+            }
         }
-        catch { Error "Error formatting $($file.Name): $_"; $errors++ }
+        catch {
+            Error "Error running clang-format on $($file.Name): $_"
+            $failedCount++
+        }
     }
 
-    if ($errors -eq 0) {
-        Success "Formatted $formatted files"
+    if ($failedCount -eq 0) {
+        Success "Successfully formatted $formattedCount files."
         return $true
     } else {
-        Error "Failed: $errors files, Succeeded: $formatted files"
+        Error "Formatting completed with $failedCount failures out of $($files.Count) files."
         return $false
     }
 }
@@ -208,63 +246,72 @@ function Invoke-CheckFormat {
     if (-not (Test-ClangFormat)) { return $false }
 
     $files = Get-SourceFiles
-    if (-not $files) { Warn "No source files found"; return $true }
+    if (-not $files) { Warn "No source files found to check formatting for."; return $true }
 
     $badFiles = @()
     foreach ($file in $files) {
         try {
-            & $ClangFormatPath --dry-run --Werror $file.FullName 2>$null
-            if ($LASTEXITCODE -ne 0) { $badFiles += $file.Name }
+            # --dry-run and --Werror will cause a non-zero exit code if file is not formatted
+            & $ClangFormatPath --dry-run --Werror $file.FullName > $null 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                $badFiles += $file.Name
+            }
         }
-        catch { Error "Error checking $($file.Name): $_"; return $false }
+        catch {
+            Error "Error running clang-format dry-run on $($file.Name): $_"
+            return $false
+        }
     }
 
     if (-not $badFiles) {
-        Success "All $($files.Count) files correctly formatted"
+        Success "All $($files.Count) files are correctly formatted."
         return $true
     } else {
-        Error "Incorrectly formatted files:"
+        Error "The following files are incorrectly formatted:"
         $badFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-        Warn "Run: .\lawnkeeper.ps1 -Format"
+        Warn "To fix, run: .\lawnkeeper.ps1 -Format"
         return $false
     }
 }
 
+# ---
+# Action Orchestration
+# ---
 function Get-Action {
-    $actions = @($Help, $Clean, $Build, $Rebuild, $Generate, $Format, $CheckFormat, $All)
-    $actionNames = @("help", "clean", "build", "rebuild", "generate", "format", "check-format", "all")
+    $actions = @($Clean, $Clear, $Build, $Rebuild, $Generate, $Format, $CheckFormat, $All)
+    $actionNames = @("clean", "clean", "build", "rebuild", "generate", "format", "check-format", "all")
 
     $activeCount = ($actions | Where-Object { $_ }).Count
     if ($activeCount -gt 1) {
-        Error "Multiple actions specified. Use only one."
+        Error "Multiple actions specified. Please choose only one."
         Show-Help; exit 1
     }
 
     for ($i = 0; $i -lt $actions.Count; $i++) {
         if ($actions[$i]) { return $actionNames[$i] }
     }
-    return "rebuild"  # default
+    return "rebuild"  # Default action
 }
 
-# Main execution
+# ---
+# Main Execution
+# ---
 Log "🌿 LawnKeeper - Win32 Project Build Script" "Cyan"
 
 $action = Get-Action
 Log "Action: $action | Config: $Config"
 
+# Check prerequisites for all actions except 'help'
 if ($action -ne "help" -and -not (Test-Prerequisites)) { exit 1 }
 
-$success = switch ($action) {
-    "help" { Show-Help; $true }
-    "clean" { Invoke-Clean }
-    "format" { Invoke-Format }
-    "check-format" { Invoke-CheckFormat }
-    "build" { Invoke-Build }
-    "rebuild" { (Invoke-Clean) -and (Invoke-Build) }
-    "generate" { Invoke-Generate }
-    "all" { (Invoke-Format) -and (Invoke-Generate) -and (Invoke-Build) }
-    default { Error "Unknown action: $action"; Show-Help; $false }
+$success = $false
+switch ($action) {
+    "clean" { $success = Invoke-Clean }
+    "format" { $success = Invoke-Format }
+    "check-format" { $success = Invoke-CheckFormat }
+    "build" { $success = Invoke-Build }
+    "rebuild" { $success = (Invoke-Clean) -and (Invoke-Build) }
+    "generate" { $success = Invoke-Generate }
+    "all" { $success = (Invoke-Format) -and (Invoke-Generate) -and (Invoke-Build) }
+    default { Error "Unknown action: $action"; Show-Help; exit 1 }
 }
-
-if (-not $success) { exit 1 }
-if ($action -ne "help") { Success "LawnKeeper finished! 🌿" }

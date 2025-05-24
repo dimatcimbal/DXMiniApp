@@ -34,6 +34,7 @@ target_link_libraries(DXMiniApp
     user32      # User interface functions
     gdi32       # Graphics device interface
     kernel32    # Core Windows functions
+    gdiplus     # GDI+ for anti-aliasing fonts
 )
 
 # Set subsystem to Windows (removes console window)
