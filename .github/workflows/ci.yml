@@ -1,0 +1,46 @@
+﻿name: C++ CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  format_check:
+    name: Check Code Formatting
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for proper formatting checks
+
+    - name: Find clang-format and run check
+      run: .\lawnkeeper.ps1 -CheckFormat
+      shell: pwsh # Use PowerShell Core for the script
+      
+  build:
+    name: Build Project
+    runs-on: windows-latest
+    needs: format_check # This job will only run if 'format_check' succeeds
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up MSVC environment
+      # This action sets up MSVC, CMake, Ninja, and other necessary tools.
+      # It's essential for a Windows build environment.
+      uses: ilammy/msvc-dev-cmd@v1.13.0
+
+    - name: Build Project (Release)
+      run: .\lawnkeeper.ps1 -Build -Config Release
+      shell: pwsh # Specify PowerShell Core for the script
+
+    - name: Build Project (Debug)
+      run: .\lawnkeeper.ps1 -Build -Config Debug
+      shell: pwsh # Specify PowerShell Core for the script
