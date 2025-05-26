@@ -1,7 +1,7 @@
 ﻿#include "NodeView.h"
 #include <CommCtrl.h> // For TVINSERTSTRUCT (if not already included by Windows.h)
 
-void LoadSceneIntoTree(HWND hTreeView, const std::wstring& filePath) {
+void Window::LoadSceneIntoTree(HWND hTreeView, const std::wstring& filePath) {
     // Clear existing items in the tree view
     TreeView_DeleteAllItems(hTreeView);
 

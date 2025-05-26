@@ -20,14 +20,14 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-file(GLOB SOURCES "${SRC_DIR}/*.cpp")
-file(GLOB HEADERS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
+file(GLOB_RECURSE SOURCES "${SRC_DIR}/*.cpp")
+file(GLOB_RECURSE HEADERS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
 
 # Create a Windows application (not console)
 add_executable(DXMiniApp WIN32 ${SOURCES} ${HEADERS})
 
 # Include directories
-target_include_directories(DXMiniApp PRIVATE ${INC_DIR})
+target_include_directories(DXMiniApp PRIVATE ${INC_DIR} ${SRC_DIR})
 
 # Link required Windows libraries
 target_link_libraries(DXMiniApp 

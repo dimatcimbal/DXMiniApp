@@ -10,10 +10,9 @@
 #include <filesystem> // For std::filesystem::path, current_path, directory_iterator
 #include <string>     // For std::wstring
 
-// Include the DirectXView header
-#include "DirectXView.h"
 #include "FileView.h"
 #include "NodeView.h"
+#include "SceneView.h"
 
 // Link with these libraries
 #pragma comment(lib, "Gdiplus.lib")
@@ -25,10 +24,10 @@ using namespace Gdiplus;
 
 // --- Global Handles for Child Windows ---
 HWND g_hwndFileList = NULL;
-HWND g_hwndDirectXView = NULL;
+HWND g_hwndSceneView = NULL;
 HWND g_hwndSceneTree = NULL;
-HWND g_hwndSplitter1 = NULL; // Between FileList and DirectXView
-HWND g_hwndSplitter2 = NULL; // Between DirectXView and SceneTree
+HWND g_hwndSplitter1 = NULL; // Between FileList and SceneView
+HWND g_hwndSplitter2 = NULL; // Between SceneView and SceneTree
 
 // --- Custom Window Messages ---
 #define WM_APP_FILE_SELECTED (WM_APP + 1)
@@ -40,7 +39,7 @@ constexpr int SPLITTER_WIDTH = 6; // Width of the draggable splitter bar
 // Store the current desired widths of the three content panes
 // These will be percentages or proportions of the total client width
 float g_paneProportions[3] = {0.33f, 0.34f,
-                              0.33f}; // Proportions for FileList, DirectXView, SceneTree
+                              0.33f}; // Proportions for FileList, SceneView, SceneTree
 int g_draggingSplitter = 0;           // 0: no drag, 1: dragging splitter1, 2: dragging splitter2
 int g_lastMouseX = 0;                 // Last mouse X position during a drag
 
@@ -49,8 +48,14 @@ GdiplusStartupInput gdiplusStartupInput;
 ULONG_PTR gdiplusToken;
 
 // --- Function Prototypes ---
-LRESULT CALLBACK WindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam);
-LRESULT CALLBACK SplitterProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam);
+LRESULT CALLBACK WindowProc(const HWND hwnd,
+                            const UINT uMsg,
+                            const WPARAM wParam,
+                            const LPARAM lParam);
+LRESULT CALLBACK SplitterProc(const HWND hwnd,
+                              const UINT uMsg,
+                              const WPARAM wParam,
+                              const LPARAM lParam);
 
 // Helper function to layout child windows
 void LayoutChildWindows(const HWND hwndParent);
@@ -79,8 +84,8 @@ void LayoutChildWindows(const HWND hwndParent) {
     SetWindowPos(g_hwndSplitter1, NULL, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
     xPos += SPLITTER_WIDTH;
 
-    // DirectX View
-    SetWindowPos(g_hwndDirectXView, NULL, xPos, 0, directXViewWidth, clientHeight, SWP_NOZORDER);
+    // Scene View
+    SetWindowPos(g_hwndSceneView, NULL, xPos, 0, directXViewWidth, clientHeight, SWP_NOZORDER);
     xPos += directXViewWidth;
 
     // Splitter 2
@@ -102,7 +107,10 @@ ATOM RegisterChildWindowClass(const WNDCLASSW& wc) {
 }
 
 // Window procedure for the main application window
-LRESULT CALLBACK WindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam) {
+LRESULT CALLBACK WindowProc(const HWND hwnd,
+                            const UINT uMsg,
+                            const WPARAM wParam,
+                            const LPARAM lParam) {
     switch (uMsg) {
     case WM_CREATE: {
         // Initialize common controls (for TreeView and ListBox)
@@ -120,35 +128,34 @@ LRESULT CALLBACK WindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
         wcSplitter.hCursor = LoadCursorW(NULL, IDC_SIZEWE);
         RegisterChildWindowClass(wcSplitter);
 
-        // Register the DirectXView window class
-        WNDCLASSW wcDirectX{};
-        wcDirectX.lpfnWndProc = DirectXViewProc; // Use the function from DirectXView.cpp
-        wcDirectX.hInstance = GetModuleHandle(NULL);
-        wcDirectX.lpszClassName = L"DirectXViewWindow";
-        wcDirectX.hbrBackground = NULL; // Crucial: no default background erase
-        RegisterChildWindowClass(wcDirectX);
+        // Register the SceneView window class
+        WNDCLASSW wcScene{};
+        wcScene.lpfnWndProc = Window::SceneViewProc; // Use the function from SceneView.cpp
+        wcScene.hInstance = GetModuleHandle(NULL);
+        wcScene.lpszClassName = L"SceneViewWindow";
+        wcScene.hbrBackground = NULL; // Crucial: no default background erase
+        RegisterChildWindowClass(wcScene);
 
         // --- Create Child Windows ---
-        g_hwndFileList = CreateWindowExW(0, WC_LISTBOX, NULL,
-                                         WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
-                                         0, 0, 0, 0, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+        g_hwndFileList =
+            CreateWindowExW(0, WC_LISTBOX, NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 0,
+                            0, 0, 0, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
         if (g_hwndFileList == NULL)
             return -1;
-        PopulateFileList(g_hwndFileList);
+        Window::PopulateFileList(g_hwndFileList);
 
-        g_hwndSplitter1 = CreateWindowExW(0, L"SplitterWindow", NULL, WS_CHILD | WS_VISIBLE,
-                                          0, 0, 0, 0, hwnd, (HMENU)1004, GetModuleHandle(NULL), NULL);
+        g_hwndSplitter1 = CreateWindowExW(0, L"SplitterWindow", NULL, WS_CHILD | WS_VISIBLE, 0, 0,
+                                          0, 0, hwnd, (HMENU)1004, GetModuleHandle(NULL), NULL);
         if (g_hwndSplitter1 == NULL)
             return -1;
 
-        g_hwndDirectXView =
-            CreateWindowExW(0, L"DirectXViewWindow", NULL, WS_CHILD | WS_VISIBLE,
-                            0, 0, 0, 0, hwnd, (HMENU)1002, GetModuleHandle(NULL), NULL);
-        if (g_hwndDirectXView == NULL)
+        g_hwndSceneView = CreateWindowExW(0, L"SceneViewWindow", NULL, WS_CHILD | WS_VISIBLE, 0, 0,
+                                          0, 0, hwnd, (HMENU)1002, GetModuleHandle(NULL), NULL);
+        if (g_hwndSceneView == NULL)
             return -1;
 
-        g_hwndSplitter2 = CreateWindowExW(0, L"SplitterWindow", NULL, WS_CHILD | WS_VISIBLE,
-                                          0, 0, 0, 0, hwnd, (HMENU)1005, GetModuleHandle(NULL), NULL);
+        g_hwndSplitter2 = CreateWindowExW(0, L"SplitterWindow", NULL, WS_CHILD | WS_VISIBLE, 0, 0,
+                                          0, 0, hwnd, (HMENU)1005, GetModuleHandle(NULL), NULL);
         if (g_hwndSplitter2 == NULL)
             return -1;
 
@@ -209,7 +216,7 @@ LRESULT CALLBACK WindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
                     std::wstring fullPathStr = fullPath.native();
 
                     // Send message with full path
-                    SendMessageW(g_hwndDirectXView, WM_APP_FILE_SELECTED, 0,
+                    SendMessageW(g_hwndSceneView, WM_APP_FILE_SELECTED, 0,
                                  (LPARAM)fullPathStr.c_str());
                     SendMessageW(g_hwndSceneTree, WM_APP_FILE_SELECTED, 0,
                                  (LPARAM)fullPathStr.c_str());
@@ -235,7 +242,10 @@ LRESULT CALLBACK WindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
 }
 
 // Window procedure for the Splitter child windows
-LRESULT CALLBACK SplitterProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam) {
+LRESULT CALLBACK SplitterProc(const HWND hwnd,
+                              const UINT uMsg,
+                              const WPARAM wParam,
+                              const LPARAM lParam) {
     switch (uMsg) {
     case WM_LBUTTONDOWN: {
         SetCapture(hwnd);
@@ -259,28 +269,28 @@ LRESULT CALLBACK SplitterProc(const HWND hwnd, const UINT uMsg, const WPARAM wPa
             if (clientWidth == 0)
                 return 0;
 
-            if (g_draggingSplitter == 1) { // Splitter between FileList and DirectXView
+            if (g_draggingSplitter == 1) { // Splitter between FileList and SceneView
                 float newFileListProportion =
                     g_paneProportions[0] + static_cast<float>(deltaX) / clientWidth;
-                float newDirectXViewProportion =
+                float newSceneViewProportion =
                     g_paneProportions[1] - static_cast<float>(deltaX) / clientWidth;
 
                 // Basic bounds checking (e.g., min 10% width)
-                if (newFileListProportion > 0.1f && newDirectXViewProportion > 0.1f) {
+                if (newFileListProportion > 0.1f && newSceneViewProportion > 0.1f) {
                     g_paneProportions[0] = newFileListProportion;
-                    g_paneProportions[1] = newDirectXViewProportion;
+                    g_paneProportions[1] = newSceneViewProportion;
                     // The third pane's proportion is automatically determined by the other two
                     // to ensure they sum to 1.0 (or close to it due to float precision)
                     g_paneProportions[2] = 1.0f - (g_paneProportions[0] + g_paneProportions[1]);
                 }
-            } else if (g_draggingSplitter == 2) { // Splitter between DirectXView and SceneTree
-                float newDirectXViewProportion =
+            } else if (g_draggingSplitter == 2) { // Splitter between SceneView and SceneTree
+                float newSceneViewProportion =
                     g_paneProportions[1] + static_cast<float>(deltaX) / clientWidth;
                 float newSceneTreeProportion =
                     g_paneProportions[2] - static_cast<float>(deltaX) / clientWidth;
 
-                if (newDirectXViewProportion > 0.1f && newSceneTreeProportion > 0.1f) {
-                    g_paneProportions[1] = newDirectXViewProportion;
+                if (newSceneViewProportion > 0.1f && newSceneTreeProportion > 0.1f) {
+                    g_paneProportions[1] = newSceneViewProportion;
                     g_paneProportions[2] = newSceneTreeProportion;
                     g_paneProportions[0] = 1.0f - (g_paneProportions[1] + g_paneProportions[2]);
                 }
@@ -288,7 +298,8 @@ LRESULT CALLBACK SplitterProc(const HWND hwnd, const UINT uMsg, const WPARAM wPa
 
             g_lastMouseX = currentMouseX;
             // The flicker fix ensures that the parent window's repaint is smooth.
-            // Child windows will get their own redraw messages (WM_SIZE/WM_PAINT) when moved/resized.
+            // Child windows will get their own redraw messages (WM_SIZE/WM_PAINT) when
+            // moved/resized.
             LayoutChildWindows(GetParent(hwnd)); // Re-layout all child windows
         }
         return 0;
@@ -347,11 +358,9 @@ int WINAPI WinMain(const HINSTANCE hInstance,
         return 0;
     }
 
-    HWND hwnd = CreateWindowExW(0, MAIN_CLASS_NAME,
-                                L"DXMiniApp - C++17 Resizable Panes",
-                                WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-                                CW_USEDEFAULT, CW_USEDEFAULT, 1200, 700, NULL,
-                                NULL, hInstance, NULL);
+    HWND hwnd = CreateWindowExW(0, MAIN_CLASS_NAME, L"DXMiniApp - C++17 Resizable Panes",
+                                WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT,
+                                1200, 700, NULL, NULL, hInstance, NULL);
 
     if (hwnd == NULL) {
         MessageBoxW(NULL, L"Failed to create main window!", L"Error", MB_OK | MB_ICONERROR);
