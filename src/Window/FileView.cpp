@@ -4,7 +4,7 @@
 
 // Function to populate the file list box with files from the current directory using
 // std::filesystem
-void PopulateFileList(HWND hListBox) {
+void Window::PopulateFileList(HWND hListBox) {
     try {
         std::filesystem::path currentDir = std::filesystem::current_path();
         for (const auto& entry : std::filesystem::directory_iterator(currentDir)) {
