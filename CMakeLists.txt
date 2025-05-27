@@ -38,6 +38,8 @@ target_link_libraries(DXMiniApp
     comctl32    # Common Controls (TreeView, ListBox, InitCommonControlsEx)
     shlwapi     # Shell Light-weight Utility library (PathCombine, PathFindFileName)
     # strsafe.h functions are generally inline or part of kernel32, no explicit lib needed.
+    d3d12       # Direct3D 12 API
+    dxgi        # DirectX Graphics Infrastructure
 )
 
 # Set subsystem to Windows (removes console window)
