@@ -358,7 +358,7 @@ int WINAPI WinMain(const HINSTANCE hInstance,
         return 0;
     }
 
-    HWND hwnd = CreateWindowExW(0, MAIN_CLASS_NAME, L"DXMiniApp - C++17 Resizable Panes",
+    HWND hwnd = CreateWindowExW(0, MAIN_CLASS_NAME, L"DXMiniApp",
                                 WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT,
                                 1200, 700, NULL, NULL, hInstance, NULL);
 
