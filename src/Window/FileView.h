@@ -1,9 +1,11 @@
 ﻿#pragma once
 #include <windows.h>
-#include <string> // For std::wstring
+#include <CommCtrl.h>
 
 namespace Window {
 // Function to populate a ListBox with files from the current directory
-void PopulateFileList(HWND hListBox);
+void PopulateFileView(HWND hListBox);
 
+// Function to handle file selection logic from TreeView
+void HandleFileSelection(HWND hTreeView, LPNMTREEVIEW lpnmtv, HWND hSceneView, HWND hSceneTree);
 } // namespace Window

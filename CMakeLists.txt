@@ -26,6 +26,10 @@ file(GLOB_RECURSE HEADERS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
 # Create a Windows application (not console)
 add_executable(DXMiniApp WIN32 ${SOURCES} ${HEADERS})
 
+# Define UNICODE and _UNICODE preprocessor macros for the project.
+# This makes TCHAR and related WinAPI functions resolve to their wide-character (W) versions.
+target_compile_definitions(DXMiniApp PRIVATE UNICODE _UNICODE)
+
 # Include directories
 target_include_directories(DXMiniApp PRIVATE ${INC_DIR} ${SRC_DIR})
 

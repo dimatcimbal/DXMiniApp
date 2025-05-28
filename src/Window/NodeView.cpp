@@ -1,5 +1,7 @@
-﻿#include "NodeView.h"
+﻿// src/Window/NodeView.cpp
+#include "NodeView.h"
 #include <CommCtrl.h> // For TVINSERTSTRUCT (if not already included by Windows.h)
+#include <string>     // For std::wstring
 
 void Window::LoadSceneIntoTree(HWND hTreeView, const std::wstring& filePath) {
     // Clear existing items in the tree view
@@ -8,7 +10,7 @@ void Window::LoadSceneIntoTree(HWND hTreeView, const std::wstring& filePath) {
     // Add a root item (e.g., the selected file name)
     TVITEMW tvItem{};
     tvItem.mask = TVIF_TEXT;
-    tvItem.pszText = (LPWSTR)filePath.c_str(); // Cast const to non-const for TVITEMW
+    tvItem.pszText = const_cast<LPWSTR>(filePath.c_str());
 
     TVINSERTSTRUCTW tvInsert{};
     tvInsert.hParent = TVI_ROOT;
@@ -19,14 +21,14 @@ void Window::LoadSceneIntoTree(HWND hTreeView, const std::wstring& filePath) {
 
     // Add some dummy child items for demonstration
     if (hRoot) {
-        tvItem.pszText = (LPWSTR)L"Model 1";
+        tvItem.pszText = const_cast<LPWSTR>(L"Model 1");
         tvInsert.hParent = hRoot;
         TreeView_InsertItem(hTreeView, &tvInsert);
 
-        tvItem.pszText = (LPWSTR)L"Camera";
+        tvItem.pszText = const_cast<LPWSTR>(L"Camera");
         TreeView_InsertItem(hTreeView, &tvInsert);
 
-        tvItem.pszText = (LPWSTR)L"Light Source";
+        tvItem.pszText = const_cast<LPWSTR>(L"Light Source");
         TreeView_InsertItem(hTreeView, &tvInsert);
     }
     // Expand the root item
