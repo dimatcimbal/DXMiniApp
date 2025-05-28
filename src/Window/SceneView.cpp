@@ -7,6 +7,8 @@
 // #include <DirectXMath.h>
 // #pragma comment(lib, "d3d11.lib")
 
+#include "Messages.h"
+
 // Window procedure for the Scene View child window
 LRESULT CALLBACK Window::SceneViewProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {

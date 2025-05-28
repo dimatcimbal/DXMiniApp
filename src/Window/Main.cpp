@@ -1,7 +1,4 @@
-﻿// Explicitly define UNICODE and _UNICODE at the top to force wide character APIs
-#define UNICODE
-#define _UNICODE
-
+﻿// src/Window/Main.cpp
 #include <windows.h> // Core Windows API functions and types
 #include <gdiplus.h> // GDI+ for basic drawing (used in WinMain for startup/shutdown)
 #include <CommCtrl.h> // For InitCommonControlsEx and standard control class names (WC_LISTBOX, WC_TREEVIEW)
@@ -23,14 +20,11 @@
 using namespace Gdiplus;
 
 // --- Global Handles for Child Windows ---
-HWND g_hwndFileList = NULL;
+HWND g_hwndFileView = NULL;
 HWND g_hwndSceneView = NULL;
 HWND g_hwndSceneTree = NULL;
 HWND g_hwndSplitter1 = NULL; // Between FileList and SceneView
 HWND g_hwndSplitter2 = NULL; // Between SceneView and SceneTree
-
-// --- Custom Window Messages ---
-#define WM_APP_FILE_SELECTED (WM_APP + 1)
 
 // --- Constants ---
 constexpr int SPLITTER_WIDTH = 6; // Width of the draggable splitter bar
@@ -72,12 +66,12 @@ void LayoutChildWindows(const HWND hwndParent) {
 
     // Calculate actual pixel widths based on proportions
     int fileListWidth = static_cast<int>(clientWidth * g_paneProportions[0]);
-    int directXViewWidth = static_cast<int>(clientWidth * g_paneProportions[1]);
+    int sceneViewWidth = static_cast<int>(clientWidth * g_paneProportions[1]);
 
     int xPos = 0;
 
     // File List
-    SetWindowPos(g_hwndFileList, NULL, xPos, 0, fileListWidth, clientHeight, SWP_NOZORDER);
+    SetWindowPos(g_hwndFileView, NULL, xPos, 0, fileListWidth, clientHeight, SWP_NOZORDER);
     xPos += fileListWidth;
 
     // Splitter 1
@@ -85,8 +79,8 @@ void LayoutChildWindows(const HWND hwndParent) {
     xPos += SPLITTER_WIDTH;
 
     // Scene View
-    SetWindowPos(g_hwndSceneView, NULL, xPos, 0, directXViewWidth, clientHeight, SWP_NOZORDER);
-    xPos += directXViewWidth;
+    SetWindowPos(g_hwndSceneView, NULL, xPos, 0, sceneViewWidth, clientHeight, SWP_NOZORDER);
+    xPos += sceneViewWidth;
 
     // Splitter 2
     SetWindowPos(g_hwndSplitter2, NULL, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
@@ -137,12 +131,14 @@ LRESULT CALLBACK WindowProc(const HWND hwnd,
         RegisterChildWindowClass(wcScene);
 
         // --- Create Child Windows ---
-        g_hwndFileList =
-            CreateWindowExW(0, WC_LISTBOX, NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY, 0,
-                            0, 0, 0, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
-        if (g_hwndFileList == NULL)
+        g_hwndFileView =
+            CreateWindowExW(0, WC_TREEVIEW, NULL,
+                            WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | TVS_HASBUTTONS |
+                                TVS_HASLINES | TVS_LINESATROOT,
+                            0, 0, 0, 0, hwnd, (HMENU)1001, GetModuleHandle(NULL), NULL);
+        if (g_hwndFileView == NULL)
             return -1;
-        Window::PopulateFileList(g_hwndFileList);
+        Window::PopulateFileView(g_hwndFileView);
 
         g_hwndSplitter1 = CreateWindowExW(0, L"SplitterWindow", NULL, WS_CHILD | WS_VISIBLE, 0, 0,
                                           0, 0, hwnd, (HMENU)1004, GetModuleHandle(NULL), NULL);
@@ -199,33 +195,13 @@ LRESULT CALLBACK WindowProc(const HWND hwnd,
         return 0;
     }
 
-    case WM_COMMAND: {
-        switch (LOWORD(wParam)) {
-        case 1001: // File List Box ID
-            if (HIWORD(wParam) == LBN_SELCHANGE) {
-                const int selectedIndex =
-                    static_cast<int>(SendMessageW(g_hwndFileList, LB_GETCURSEL, 0, 0));
-                if (selectedIndex != LB_ERR) {
-                    wchar_t szFilePathBuffer[MAX_PATH];
-                    SendMessageW(g_hwndFileList, LB_GETTEXT, selectedIndex,
-                                 (LPARAM)szFilePathBuffer);
-                    std::wstring selectedFileName = szFilePathBuffer;
-
-                    std::filesystem::path currentPath = std::filesystem::current_path();
-                    std::filesystem::path fullPath = currentPath / selectedFileName;
-                    std::wstring fullPathStr = fullPath.native();
-
-                    // Send message with full path
-                    SendMessageW(g_hwndSceneView, WM_APP_FILE_SELECTED, 0,
-                                 (LPARAM)fullPathStr.c_str());
-                    SendMessageW(g_hwndSceneTree, WM_APP_FILE_SELECTED, 0,
-                                 (LPARAM)fullPathStr.c_str());
-
-                    // Use OutputDebugStringW for wide character strings
-                    OutputDebugStringW((L"Selected File: " + fullPathStr + L"\n").c_str());
-                }
-            }
-            break;
+    case WM_NOTIFY: {
+        // Handle notifications from common controls like TreeView
+        LPNMHDR lpnmh = reinterpret_cast<LPNMHDR>(lParam);
+        if (lpnmh->hwndFrom == g_hwndFileView && lpnmh->code == TVN_SELCHANGED) {
+            // Delegate the TreeView selection handling to the FileView component
+            Window::HandleFileSelection(g_hwndFileView, reinterpret_cast<LPNMTREEVIEW>(lParam),
+                                        g_hwndSceneView, g_hwndSceneTree);
         }
         return 0;
     }
@@ -358,9 +334,9 @@ int WINAPI WinMain(const HINSTANCE hInstance,
         return 0;
     }
 
-    HWND hwnd = CreateWindowExW(0, MAIN_CLASS_NAME, L"DXMiniApp",
-                                WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT,
-                                1200, 700, NULL, NULL, hInstance, NULL);
+    HWND hwnd =
+        CreateWindowExW(0, MAIN_CLASS_NAME, L"DXMiniApp", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+                        CW_USEDEFAULT, CW_USEDEFAULT, 1200, 700, NULL, NULL, hInstance, NULL);
 
     if (hwnd == NULL) {
         MessageBoxW(NULL, L"Failed to create main window!", L"Error", MB_OK | MB_ICONERROR);
