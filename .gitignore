@@ -19,3 +19,7 @@ DXMiniApp.exe
 # System files
 Thumbs.db
 .DS_Store
+
+# Logs and traces
+*trace*
+*.log

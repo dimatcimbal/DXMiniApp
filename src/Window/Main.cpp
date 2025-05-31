@@ -5,10 +5,8 @@
 
 // C++ Standard Library Includes
 #include <filesystem> // For std::filesystem::path, current_path, directory_iterator
-#include <string>     // For std::wstring
 
 #include "FileView.h"
-#include "NodeView.h"
 #include "SceneView.h"
 
 // Link with these libraries
@@ -28,6 +26,9 @@ HWND g_hwndSplitter2 = NULL; // Between SceneView and SceneTree
 
 // --- Constants ---
 constexpr int SPLITTER_WIDTH = 6; // Width of the draggable splitter bar
+
+// --- Menu Command IDs ---
+#define IDM_EXIT 1000 // Unique ID for the Exit menu item
 
 // --- Global Variables for Resizing ---
 // Store the current desired widths of the three content panes
@@ -113,6 +114,23 @@ LRESULT CALLBACK WindowProc(const HWND hwnd,
         icex.dwICC = ICC_TREEVIEW_CLASSES | ICC_STANDARD_CLASSES;
         InitCommonControlsEx(&icex);
 
+        // --- Create the Menu Bar ---
+        HMENU hMenuBar = CreateMenu();
+        if (hMenuBar == NULL) {
+            return -1;
+        }
+
+        // Create the "Scene" popup menu
+        HMENU hSceneMenu = CreatePopupMenu();
+        if (hSceneMenu == NULL) {
+            return -1;
+        }
+
+        AppendMenuW(hSceneMenu, MF_STRING, IDM_EXIT, L"E&xit"); // & for accelerator key (Alt+X)
+        AppendMenuW(hMenuBar, MF_POPUP, (UINT_PTR)hSceneMenu,
+                    L"&Scene"); // & for accelerator key (Alt+S)
+        SetMenu(hwnd, hMenuBar);
+
         // --- Register Child Window Classes ---
         WNDCLASSW wcSplitter{}; // Use WNDCLASSW
         wcSplitter.lpfnWndProc = SplitterProc;
@@ -168,6 +186,17 @@ LRESULT CALLBACK WindowProc(const HWND hwnd,
         return 0;
     }
 
+    case WM_COMMAND: {
+        // Handle menu commands and other control notifications
+        switch (LOWORD(wParam)) {
+        case IDM_EXIT:
+            // When the "Exit" menu item is clicked, destroy the main window
+            DestroyWindow(hwnd); // This will cause a WM_DESTROY message to be sent
+            break;
+        }
+        return 0;
+    }
+
     case WM_ERASEBKGND: {
         // IMPORTANT: Prevent parent window from erasing its background.
         // All visible areas will be covered by child windows or explicitly drawn by them.
@@ -207,8 +236,7 @@ LRESULT CALLBACK WindowProc(const HWND hwnd,
     }
 
     case WM_DESTROY: {
-        // Clean up brushes created for splitter backgrounds if they were stored globally
-        // (No longer strictly needed if drawing is in WM_PAINT and brush is temporary)
+        // Post a quit message to terminate the message loop
         PostQuitMessage(0);
         return 0;
     }
@@ -224,28 +252,35 @@ LRESULT CALLBACK SplitterProc(const HWND hwnd,
                               const LPARAM lParam) {
     switch (uMsg) {
     case WM_LBUTTONDOWN: {
+        // Capture mouse input to track drag operations
         SetCapture(hwnd);
+        // Store initial mouse X position
         g_lastMouseX = LOWORD(lParam);
         if (hwnd == g_hwndSplitter1) {
+            // Indicate dragging splitter 1
             g_draggingSplitter = 1;
         } else if (hwnd == g_hwndSplitter2) {
+            // Indicate dragging splitter 2
             g_draggingSplitter = 2;
         }
         return 0;
     }
     case WM_MOUSEMOVE: {
+        // If a splitter is being dragged and the left mouse button is down
         if (g_draggingSplitter != 0 && (wParam & MK_LBUTTON)) {
             const int currentMouseX = LOWORD(lParam);
-            const int deltaX = currentMouseX - g_lastMouseX;
+            const int deltaX = currentMouseX - g_lastMouseX; // Calculate mouse movement delta
 
+            // Get the client area of the parent window (main application window)
             RECT rcClient;
             GetClientRect(GetParent(hwnd), &rcClient);
             const int clientWidth = rcClient.right - rcClient.left;
 
             if (clientWidth == 0)
-                return 0;
+                return 0; // Avoid division by zero if window is minimized or too small
 
             if (g_draggingSplitter == 1) { // Splitter between FileList and SceneView
+                // Adjust proportions based on mouse movement
                 float newFileListProportion =
                     g_paneProportions[0] + static_cast<float>(deltaX) / clientWidth;
                 float newSceneViewProportion =
@@ -260,11 +295,13 @@ LRESULT CALLBACK SplitterProc(const HWND hwnd,
                     g_paneProportions[2] = 1.0f - (g_paneProportions[0] + g_paneProportions[1]);
                 }
             } else if (g_draggingSplitter == 2) { // Splitter between SceneView and SceneTree
+                // Adjust proportions based on mouse movement
                 float newSceneViewProportion =
                     g_paneProportions[1] + static_cast<float>(deltaX) / clientWidth;
                 float newSceneTreeProportion =
                     g_paneProportions[2] - static_cast<float>(deltaX) / clientWidth;
 
+                // Basic bounds checking
                 if (newSceneViewProportion > 0.1f && newSceneTreeProportion > 0.1f) {
                     g_paneProportions[1] = newSceneViewProportion;
                     g_paneProportions[2] = newSceneTreeProportion;
