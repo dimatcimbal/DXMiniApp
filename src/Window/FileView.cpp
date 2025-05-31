@@ -56,7 +56,7 @@ void Window::PopulateFileView(HWND hTreeView) {
                 tvChildItem.pszText = const_cast<LPWSTR>(fileName.c_str());
 
                 TVINSERTSTRUCTW
-                    tvChildInsert{};           // Explicitly use TVINSERTSTRUCTW for wide characters
+                tvChildInsert{};               // Explicitly use TVINSERTSTRUCTW for wide characters
                 tvChildInsert.hParent = hRoot; // This item is a child of the root folder
                 tvChildInsert.hInsertAfter = TVI_LAST; // Insert at the end
                 tvChildInsert.item = tvChildItem;      // Assign the TVITEMW structure
