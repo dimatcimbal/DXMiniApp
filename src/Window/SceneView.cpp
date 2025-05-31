@@ -1,4 +1,5 @@
-﻿#include "SceneView.h"
+﻿// src/Window/SceneView.cpp
+#include "SceneView.h"
 #include <windows.h>
 #include <string>
 

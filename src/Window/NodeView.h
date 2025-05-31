@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// src/Window/NodeView.h
+#pragma once
 #include <windows.h>
 #include <string> // For std::wstring
 

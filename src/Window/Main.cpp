@@ -33,8 +33,8 @@ constexpr int SPLITTER_WIDTH = 6; // Width of the draggable splitter bar
 // --- Global Variables for Resizing ---
 // Store the current desired widths of the three content panes
 // These will be percentages or proportions of the total client width
-float g_paneProportions[3] = {0.33f, 0.34f,
-                              0.33f}; // Proportions for FileList, SceneView, SceneTree
+float g_paneProportions[3] = {0.17f, 0.56f,
+                              0.27f}; // Proportions for FileList, SceneView, SceneTree
 int g_draggingSplitter = 0;           // 0: no drag, 1: dragging splitter1, 2: dragging splitter2
 int g_lastMouseX = 0;                 // Last mouse X position during a drag
 

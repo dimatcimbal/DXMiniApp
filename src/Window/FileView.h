@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// src/Windows/FileView.h
+#pragma once
 #include <windows.h>
 #include <CommCtrl.h>
 

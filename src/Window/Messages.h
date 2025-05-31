@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// src/Windows/Messages.cpp
+#pragma once
 #include <windows.h> // Required for WM_APP
 
 // --- Scene file has been selected
