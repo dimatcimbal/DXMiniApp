@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// src/Window/SceneView.h
+#pragma once
 
 #include <windows.h>
 
