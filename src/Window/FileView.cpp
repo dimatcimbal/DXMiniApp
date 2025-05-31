@@ -99,7 +99,10 @@ void Window::PopulateFileView(HWND hTreeView) {
 }
 
 // New function to handle file selection logic from the TreeView
-void Window::HandleFileSelection(HWND hTreeView, LPNMTREEVIEW lpnmtv, HWND hSceneView, HWND hSceneTree) {
+void Window::HandleFileSelection(HWND hTreeView,
+                                 LPNMTREEVIEW lpnmtv,
+                                 HWND hSceneView,
+                                 HWND hSceneTree) {
     // Get the selected item's text
     TVITEMW tvItem;
     tvItem.mask = TVIF_TEXT;
@@ -127,10 +130,8 @@ void Window::HandleFileSelection(HWND hTreeView, LPNMTREEVIEW lpnmtv, HWND hScen
             std::wstring fullPathStr = fullPath.native();
 
             // Send message with full path to the scene views
-            SendMessageW(hSceneView, WM_APP_FILE_SELECTED, 0,
-                         (LPARAM)fullPathStr.c_str());
-            SendMessageW(hSceneTree, WM_APP_FILE_SELECTED, 0,
-                         (LPARAM)fullPathStr.c_str());
+            SendMessageW(hSceneView, WM_APP_FILE_SELECTED, 0, (LPARAM)fullPathStr.c_str());
+            SendMessageW(hSceneTree, WM_APP_FILE_SELECTED, 0, (LPARAM)fullPathStr.c_str());
 
             OutputDebugStringW((L"Selected File: " + fullPathStr + L"\n").c_str());
         } else {
