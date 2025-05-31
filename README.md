@@ -21,7 +21,7 @@ DXMiniApp/
 │
 ├── .gitignore           # Git ignore rules
 ├── CMakeLists.txt       # CMake build configuration
-├── lawnkeeper.ps1       # Build automation script
+├── housekeeper.ps1      # Build automation script
 └── README.md            # Project documentation
 ```
 
@@ -30,10 +30,10 @@ DXMiniApp/
 # Clone and build
 git clone <repository-url>
 cd DXMiniApp
-.\lawnkeeper.ps1
+.\housekeeper.ps1
 
 # Or step by step
-.\lawnkeeper.ps1 -Build
+.\housekeeper.ps1 -Build
 ```
 
 ### License
