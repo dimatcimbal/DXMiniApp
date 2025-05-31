@@ -2,14 +2,14 @@
 
 <#
 .SYNOPSIS
-    LawnKeeper - Build automation for Win32 project
+    housekeeper - Build automation for Win32 project
 .DESCRIPTION
     Clean, build, format, and manage Win32 application project
 .EXAMPLE
-    .\lawnkeeper.ps1           # Default: clean and build
-    .\lawnkeeper.ps1 -Clean    # Clean only
-    .\lawnkeeper.ps1 -Format   # Format source code
-    .\lawnkeeper.ps1 -All      # Format, generate, and build
+    .\housekeeper.ps1           # Default: clean and build
+    .\housekeeper.ps1 -Clean    # Clean only
+    .\housekeeper.ps1 -Format   # Format source code
+    .\housekeeper.ps1 -All      # Format, generate, and build
 #>
 
 param(
@@ -40,9 +40,9 @@ function Warn($msg) { Write-Host "⚠️  $msg" -ForegroundColor Yellow }
 
 function Show-Help {
     Write-Host @"
-🌿 LawnKeeper - Win32 Project Build Script
+🌿 housekeeper - Win32 Project Build Script
 
-USAGE: .\lawnkeeper.ps1 [action] [options]
+USAGE: .\housekeeper.ps1 [action] [options]
 
 ACTIONS:
     -Help         Show this help
@@ -59,10 +59,10 @@ OPTIONS:
     -Config       Debug or Release (default: Release)
 
 EXAMPLES:
-    .\lawnkeeper.ps1                    # Clean and build
-    .\lawnkeeper.ps1 -Build -Config Debug
-    .\lawnkeeper.ps1 -Format
-    .\lawnkeeper.ps1 -All
+    .\housekeeper.ps1                    # Clean and build
+    .\housekeeper.ps1 -Build -Config Debug
+    .\housekeeper.ps1 -Format
+    .\housekeeper.ps1 -All
 "@ -ForegroundColor Cyan
 }
 
@@ -276,7 +276,7 @@ function Invoke-CheckFormat {
     } else {
         Error "The following files are incorrectly formatted:"
         $badFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-        Warn "To fix, run: .\lawnkeeper.ps1 -Format"
+        Warn "To fix, run: .\housekeeper.ps1 -Format"
         return $false
     }
 }
@@ -312,7 +312,7 @@ function Get-Action {
 # ---
 # Main Execution
 # ---
-Log "🌿 LawnKeeper - Win32 Project Build Script" "Cyan"
+Log "🌿 housekeeper - Win32 Project Build Script" "Cyan"
 
 $action = Get-Action
 Log "Action: $action | Config: $Config"

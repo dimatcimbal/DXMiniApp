@@ -20,7 +20,7 @@ jobs:
         fetch-depth: 0 # Fetch all history for proper formatting checks
 
     - name: Find clang-format and run check
-      run: .\lawnkeeper.ps1 -CheckFormat
+      run: .\housekeeper.ps1 -CheckFormat
       shell: pwsh # Use PowerShell Core for the script
       
   build:
@@ -38,9 +38,9 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1.13.0
 
     - name: Build Project (Release)
-      run: .\lawnkeeper.ps1 -Build -Config Release
+      run: .\housekeeper.ps1 -Build -Config Release
       shell: pwsh # Specify PowerShell Core for the script
 
     - name: Build Project (Debug)
-      run: .\lawnkeeper.ps1 -Build -Config Debug
+      run: .\housekeeper.ps1 -Build -Config Debug
       shell: pwsh # Specify PowerShell Core for the script
