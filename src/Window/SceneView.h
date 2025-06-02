@@ -1,15 +1,15 @@
 ﻿// src/Window/SceneView.h
 #pragma once
 
-#include <windows.h>
+#include "BaseView.h"
 
-namespace Window {
-// Function prototype for the SceneView window procedure
-LRESULT CALLBACK SceneViewProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+class SceneView : public BaseView {
+  public:
+    SceneView();
+    ~SceneView() override;
 
-// You might also declare other DirectX-related functions or classes here
-// For example:
-// void InitializeDirectX(HWND hwnd);
-// void RenderDirectXScene();
-// void CleanupDirectX();
-} // namespace Window
+    // Overrides BaseView::Create to create a placeholder window for the scene.
+    bool OnCreate(HWND hParent, UINT id) override;
+
+    // TODO: Add rendering specific methods here (e.g., InitDirectX(), RenderFrame())
+};
