@@ -1,12 +1,20 @@
-﻿// src/Windows/FileView.h
+﻿// src/Window/FileView.h
 #pragma once
-#include <windows.h>
-#include <CommCtrl.h>
 
-namespace Window {
-// Function to populate a ListBox with files from the current directory
-void PopulateFileView(HWND hListBox);
+#include "BaseView.h"
+#include "Util/BaseFileProvider.h"
 
-// Function to handle file selection logic from TreeView
-void HandleFileSelection(HWND hTreeView, LPNMTREEVIEW lpnmtv, HWND hSceneView, HWND hSceneTree);
-} // namespace Window
+class FileView : public BaseView {
+  public:
+    FileView(Util::BaseFileProvider& fileProvider);
+    ~FileView() override;
+
+    // Overrides BaseView::Create to create the ListView control.
+    bool OnCreate(HWND hParent, UINT id) override;
+
+    // Specific logic for populating the file list.
+    void PopulateFileView();
+
+  private:
+    Util::BaseFileProvider& m_fileProvider;
+};

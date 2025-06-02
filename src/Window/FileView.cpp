@@ -1,18 +1,53 @@
-﻿// src/Windows/FileView.cpp
+﻿// src/Window/FileView.cpp
 #include "FileView.h"
-#include <windows.h>  // For MultiByteToWideChar and MessageBoxW
-#include <CommCtrl.h> // For TreeView and ListBox controls
-#include <filesystem> // For file system operations
-#include <string>     // For std::wstring
-#include <vector>     // For std::vector
+#include <commctrl.h> // Required for ListView functions (e.g., ListView_InsertItem)
+#include <filesystem>
+#include "Util/WorkingDirFileProvider.h"
 
-#include "Messages.h"
+// Link with Comctl32.lib for common controls
+#pragma comment(lib, "Comctl32.lib")
 
-// Function to populate the tree view with the current folder and its files using
-// std::filesystem
-void Window::PopulateFileView(HWND hTreeView) {
+FileView::FileView(Util::BaseFileProvider& fileProvider) : m_fileProvider(fileProvider) {
+}
+
+FileView::~FileView() = default;
+
+// Creates the ListView control for the file view.
+bool FileView::OnCreate(HWND hParent, UINT id) {
+    // Initialize common controls once.
+    // This is often done globally in WinMain, but placing it here ensures it's done before
+    // creating a ListView if this component is instantiated independently.
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC = ICC_TREEVIEW_CLASSES; // Corrected: Removed the negation
+    InitCommonControlsEx(&icex);
+
+    m_hWnd =
+        CreateWindowEx(WS_EX_CLIENTEDGE, // Extended style for a sunken border
+                       WC_TREEVIEW, // Tree View control class name (from commctrl.h) - Corrected
+                                    // comment: It's a TreeView, not ListView here.
+                       nullptr,     // Window text (none for a list view)
+                       WS_CHILD | WS_VISIBLE | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+                           TVS_SHOWSELALWAYS, // TreeView styles for file view
+                       0, 0, 0, 0,            // Initial position and size will be set by parent
+                       hParent,               // Parent window
+                       (HMENU)(INT_PTR)id,    // Child window ID
+                       GetModuleHandle(nullptr), nullptr);
+
+    if (m_hWnd == nullptr) {
+        OutputDebugString(L"Failed to create FileView TreeView.\n"); // Corrected message
+        return false;
+    }
+
+    PopulateFileView(); // Populate it immediately after creation
+
+    return true;
+}
+
+// Populates the file view control with the files within the same dir.
+void FileView::PopulateFileView() {
     // Clear any existing items in the tree view before populating
-    TreeView_DeleteAllItems(hTreeView);
+    TreeView_DeleteAllItems(m_hWnd);
 
     try {
         std::filesystem::path currentDir = std::filesystem::current_path();
@@ -22,7 +57,9 @@ void Window::PopulateFileView(HWND hTreeView) {
         // In that case, we'll use the root name (e.g., "C:\").
         std::wstring rootDisplayName =
             currentDir.filename().empty()
-                ? currentDir.root_name().wstring() + currentDir.root_directory().wstring()
+                ? currentDir.root_path().wstring() +
+                      currentDir.root_directory()
+                          .wstring() // Use root_path and root_directory for "C:\"
                 : currentDir.filename().wstring();
 
         // Structure to insert the root item (current folder)
@@ -36,106 +73,59 @@ void Window::PopulateFileView(HWND hTreeView) {
         tvInsert.item = tvItem;           // Assign the TVITEMW structure
 
         // Insert the root item and get its handle
-        HTREEITEM hRoot = TreeView_InsertItem(hTreeView, &tvInsert);
+        HTREEITEM hRoot = TreeView_InsertItem(m_hWnd, &tvInsert);
 
-        if (hRoot == NULL) {
-            MessageBoxW(NULL, L"Failed to insert root item into TreeView.", L"Error",
+        if (hRoot == nullptr) {
+            MessageBoxW(nullptr, L"Failed to insert root item into TreeView.", L"Error",
                         MB_OK | MB_ICONERROR);
             return;
         }
 
         // Iterate through the directory to add files as children of the root node
-        for (const auto& entry : std::filesystem::directory_iterator(currentDir)) {
-            if (entry.is_regular_file()) { // Only add regular files
-                // Get the filename as a wide string
-                std::wstring fileName = entry.path().filename().wstring();
+        for (const auto& entry : m_fileProvider) {
+            // Structure to insert a child item (file)
+            TVITEMW tvChildItem{}; // Explicitly use TVITEMW for wide characters
+            tvChildItem.mask = TVIF_TEXT;
+            tvChildItem.pszText = const_cast<LPWSTR>(entry.name.c_str());
 
-                // Structure to insert a child item (file)
-                TVITEMW tvChildItem{}; // Explicitly use TVITEMW for wide characters
-                tvChildItem.mask = TVIF_TEXT;
-                tvChildItem.pszText = const_cast<LPWSTR>(fileName.c_str());
+            TVINSERTSTRUCTW
+            tvChildInsert{};               // Explicitly use TVINSERTSTRUCTW for wide characters
+            tvChildInsert.hParent = hRoot; // This item is a child of the root folder
+            tvChildInsert.hInsertAfter = TVI_LAST; // Insert at the end
+            tvChildInsert.item = tvChildItem;      // Assign the TVITEMW structure
 
-                TVINSERTSTRUCTW
-                tvChildInsert{};               // Explicitly use TVINSERTSTRUCTW for wide characters
-                tvChildInsert.hParent = hRoot; // This item is a child of the root folder
-                tvChildInsert.hInsertAfter = TVI_LAST; // Insert at the end
-                tvChildInsert.item = tvChildItem;      // Assign the TVITEMW structure
-
-                // Insert the file item
-                TreeView_InsertItem(hTreeView, &tvChildInsert);
-            }
+            // Insert the file item
+            TreeView_InsertItem(m_hWnd, &tvChildInsert);
         }
 
         // Explicitly expand the root node using SendMessage
         // This is often more reliable than just TreeView_Expand macro
-        SendMessage(hTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
+        SendMessage(m_hWnd, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
 
         // Force a redraw of the TreeView to ensure expansion is visible immediately
-        UpdateWindow(hTreeView);
+        UpdateWindow(m_hWnd);
 
     } catch (const std::filesystem::filesystem_error& e) {
         std::wstring errorMsg = L"Filesystem error: ";
         // Convert char* to wstring for MessageBoxW
         std::string narrowMsg = e.what();
-        int bufferSize = MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, NULL, 0);
+        int bufferSize = MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, nullptr, 0);
         if (bufferSize > 0) {
             std::vector<wchar_t> wBuf(bufferSize);
             MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, wBuf.data(), bufferSize);
             errorMsg += wBuf.data();
         }
-        MessageBoxW(NULL, errorMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+        MessageBoxW(nullptr, errorMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
     } catch (const std::exception& e) {
         std::wstring errorMsg = L"General error: ";
         // Convert char* to wstring for MessageBoxW
         std::string narrowMsg = e.what();
-        int bufferSize = MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, NULL, 0);
+        int bufferSize = MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, nullptr, 0);
         if (bufferSize > 0) {
             std::vector<wchar_t> wBuf(bufferSize);
             MultiByteToWideChar(CP_ACP, 0, narrowMsg.c_str(), -1, wBuf.data(), bufferSize);
             errorMsg += wBuf.data();
         }
-        MessageBoxW(NULL, errorMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
-    }
-}
-
-// New function to handle file selection logic from the TreeView
-void Window::HandleFileSelection(HWND hTreeView,
-                                 LPNMTREEVIEW lpnmtv,
-                                 HWND hSceneView,
-                                 HWND hSceneTree) {
-    // Get the selected item's text
-    TVITEMW tvItem;
-    tvItem.mask = TVIF_TEXT;
-    tvItem.hItem = lpnmtv->itemNew.hItem;
-
-    // Allocate a buffer for the text
-    wchar_t szText[MAX_PATH];
-    tvItem.pszText = szText;
-    tvItem.cchTextMax = MAX_PATH;
-
-    if (TreeView_GetItem(hTreeView, &tvItem)) {
-        std::wstring selectedItemText = szText;
-
-        // Determine if the selected item is a file or a folder.
-        // For simplicity, we'll assume only files are selectable as children
-        // and the root is the current folder.
-        // If you want to handle folder selection and change directory,
-        // you'd add more logic here to differentiate.
-
-        HTREEITEM hRoot = TreeView_GetRoot(hTreeView);
-        // Only send file path if a child item is selected (not the root)
-        if (lpnmtv->itemNew.hItem != hRoot) {
-            std::filesystem::path currentPath = std::filesystem::current_path();
-            std::filesystem::path fullPath = currentPath / selectedItemText;
-            std::wstring fullPathStr = fullPath.native();
-
-            // Send message with full path to the scene views
-            SendMessageW(hSceneView, WM_APP_FILE_SELECTED, 0, (LPARAM)fullPathStr.c_str());
-            SendMessageW(hSceneTree, WM_APP_FILE_SELECTED, 0, (LPARAM)fullPathStr.c_str());
-
-            OutputDebugStringW((L"Selected File: " + fullPathStr + L"\n").c_str());
-        } else {
-            OutputDebugStringW((L"Selected Folder (Root): " + selectedItemText + L"\n").c_str());
-        }
+        MessageBoxW(nullptr, errorMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
     }
 }
