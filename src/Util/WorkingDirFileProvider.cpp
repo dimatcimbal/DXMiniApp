@@ -24,4 +24,13 @@ FileIterator WorkingDirFileProvider::end() {
     return FileIterator(std::filesystem::directory_iterator());
 }
 
+FileEntry WorkingDirFileProvider::getCurrentDirectory() const {
+    // Construct a FileEntry from the directory path's display name
+    FileEntry entry;
+    entry.name = m_directoryPath.filename().empty() ? m_directoryPath.root_path().wstring() +
+                                                          m_directoryPath.root_directory().wstring()
+                                                    : m_directoryPath.filename().wstring();
+    return entry;
+}
+
 } // namespace Util

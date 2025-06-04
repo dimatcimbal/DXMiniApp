@@ -85,6 +85,9 @@ class BaseFileProvider {
     // Returns an iterator to the end sentinel of the file collection.
     virtual FileIterator end() = 0;
 
+    // Returns the display name of the directory being provided as a FileEntry.
+    virtual FileEntry getCurrentDirectory() const = 0;
+
   protected:
     std::filesystem::path m_directoryPath; // The directory path to be iterated
 };

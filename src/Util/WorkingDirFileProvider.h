@@ -15,6 +15,7 @@ class WorkingDirFileProvider : public BaseFileProvider {
 
     FileIterator begin() override;
     FileIterator end() override;
+    FileEntry getCurrentDirectory() const override;
 };
 
 } // namespace Util
