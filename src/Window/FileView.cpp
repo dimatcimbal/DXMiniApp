@@ -50,17 +50,9 @@ void FileView::PopulateFileView() {
     TreeView_DeleteAllItems(m_hWnd);
 
     try {
-        std::filesystem::path currentDir = std::filesystem::current_path();
-
-        // Get the display name for the root node (current folder)
-        // If the current directory is "C:\", filename() returns an empty string.
-        // In that case, we'll use the root name (e.g., "C:\").
-        std::wstring rootDisplayName =
-            currentDir.filename().empty()
-                ? currentDir.root_path().wstring() +
-                      currentDir.root_directory()
-                          .wstring() // Use root_path and root_directory for "C:\"
-                : currentDir.filename().wstring();
+        // Get the current directory as a FileEntry directly from the file provider
+        Util::FileEntry rootEntry = m_fileProvider.getCurrentDirectory();
+        std::wstring rootDisplayName = rootEntry.name;
 
         // Structure to insert the root item (current folder)
         TVITEMW tvItem{};
