@@ -9,8 +9,6 @@ struct FileEntry {
     std::wstring name;
 };
 
-class BaseFileProvider; // Forward declaration
-
 // Custom iterator wrapper for std::filesystem::directory_iterator
 class FileIterator {
   public:
