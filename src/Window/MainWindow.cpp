@@ -1,4 +1,5 @@
 ﻿// src/Window/MainWindow.cpp
+// Created by dtcimbal on 2/06/2025.
 #include <Windows.h>  // Core Windows API functions (e.g., CreateWindowEx, DefWindowProc)
 #include <CommCtrl.h> // Common Controls (e.g., InitCommonControlsEx, WC_TREEVIEW)
 #include <stdexcept>  // For std::runtime_error, useful for more robust error handling
@@ -6,6 +7,9 @@
 
 #include "FileView.h" // Include definitions for view component classes
 #include "MainWindow.h"
+
+#include <sstream>
+
 #include "SceneTree.h"
 #include "SceneView.h"
 #include "Util/WorkingDirFileProvider.h"
@@ -67,10 +71,10 @@ ATOM MainWindow::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"RegisterClassEx failed for MAIN_CLASS_NAME. Error: " +
-                                    std::to_wstring(errorCode) + L"\n";
-        OutputDebugString(errorMessage.c_str());
+        std::wostringstream errorMessage;
+        errorMessage << L"RegisterClassEx failed for MAIN_CLASS_NAME. Error: "
+                     << std::to_wstring(GetLastError()) << L"\n";
+        OutputDebugString(errorMessage.str().c_str());
     }
     return atom;
 }
@@ -91,11 +95,11 @@ ATOM MainWindow::RegisterChildWindowClass(LPCWSTR className,
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"RegisterClassEx failed for child class " +
-                                    std::wstring(className) + L". Error: " +
-                                    std::to_wstring(errorCode) + L"\n";
-        OutputDebugString(errorMessage.c_str());
+        std::wostringstream errorMessage;
+        errorMessage << L"RegisterClassEx failed for child class "
+                     << std::wstring(className) + L". Error: "
+                     << std::to_wstring(GetLastError()) + L"\n";
+        OutputDebugString(errorMessage.str().c_str());
     }
     return atom;
 }
@@ -107,11 +111,11 @@ bool MainWindow::CreateMainWindow() {
     WNDCLASSEX wcInfo = {};
     wcInfo.cbSize = sizeof(WNDCLASSEX);
     if (!GetClassInfoEx(m_hInstance, MAIN_CLASS_NAME, &wcInfo)) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"CreateMainWindow: Class '" + std::wstring(MAIN_CLASS_NAME) +
-                                    L"' is NOT registered! Error: " + std::to_wstring(errorCode) +
-                                    L"\n";
-        OutputDebugString(errorMessage.c_str());
+        std::wostringstream errorMessage;
+        errorMessage << L"CreateMainWindow: Class '"
+                     << std::wstring(MAIN_CLASS_NAME) + L"' is NOT registered! Error: "
+                     << std::to_wstring(GetLastError()) + L"\n";
+        OutputDebugString(errorMessage.str().c_str());
         return false;
     }
 
