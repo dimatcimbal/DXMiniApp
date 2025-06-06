@@ -1,7 +1,14 @@
 ﻿// src/Window/SceneView.h
+// Created by dtcimbal on 26/05/2025.
 #pragma once
 
 #include "BaseView.h"
+
+#include <memory>
+
+#include "Graphics/Device.h"
+
+using std::unique_ptr;
 
 class SceneView : public BaseView {
   public:
@@ -11,5 +18,6 @@ class SceneView : public BaseView {
     // Overrides BaseView::Create to create a placeholder window for the scene.
     bool OnCreate(HWND hParent, UINT id) override;
 
-    // TODO: Add rendering specific methods here (e.g., InitDirectX(), RenderFrame())
+  private:
+    unique_ptr<Graphics::Device> mDevice;
 };

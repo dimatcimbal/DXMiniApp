@@ -1,4 +1,5 @@
 ﻿// src/Window/SceneView.cpp
+// Created by dtcimbal on 26/05/2025.
 #include "SceneView.h"
 
 SceneView::SceneView() = default;
@@ -20,6 +21,12 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
 
     if (m_hWnd == nullptr) {
         OutputDebugString(L"Failed to create SceneView placeholder.\n");
+        return false;
+    }
+
+    mDevice = std::make_unique<Graphics::Device>();
+    if FAILED(mDevice->OnCreate()) {
+        OutputDebugString(L"Failed to initialize a Graphics::Device.\n");
         return false;
     }
 

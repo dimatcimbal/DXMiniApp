@@ -1,4 +1,5 @@
 ﻿// src/main.cpp
+// Created by dtcimbal on 23/05/2025.
 #include <Windows.h> // Required for WinMain
 #include "Win32Application.h"
 
