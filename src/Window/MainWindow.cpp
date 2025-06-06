@@ -1,4 +1,5 @@
 ﻿// src/Window/MainWindow.cpp
+// Created by dtcimbal on 2/06/2025.
 #include <Windows.h>  // Core Windows API functions (e.g., CreateWindowEx, DefWindowProc)
 #include <CommCtrl.h> // Common Controls (e.g., InitCommonControlsEx, WC_TREEVIEW)
 #include <stdexcept>  // For std::runtime_error, useful for more robust error handling
@@ -6,6 +7,9 @@
 
 #include "FileView.h" // Include definitions for view component classes
 #include "MainWindow.h"
+
+#include <sstream>
+
 #include "SceneTree.h"
 #include "SceneView.h"
 #include "Util/WorkingDirFileProvider.h"
@@ -22,13 +26,13 @@ LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 // Constructor: Initializes members and performs window class registration and main window creation.
 MainWindow::MainWindow()
-    : m_hWnd(nullptr), m_hwndSplitter1(nullptr), m_hwndSplitter2(nullptr),
-      m_hInstance(GetModuleHandle(nullptr)), m_draggingSplitter(0), m_lastMouseX(0) {
+    : mHWnd(nullptr), mHwndSplitter1(nullptr), mHwndSplitter2(nullptr),
+      mHInstance(GetModuleHandle(nullptr)), mDraggingSplitter(0), mLastMouseX(0) {
     // Initialize pane proportions for the three main sections (FileView, SceneView, SceneTree).
     // These values dictate the initial relative widths of the panes.
-    m_paneProportions[0] = 0.33f; // FileView pane width proportion
-    m_paneProportions[1] = 0.34f; // SceneView pane width proportion
-    m_paneProportions[2] = 0.33f; // SceneTree pane width proportion
+    mPaneProportions[0] = 0.33f; // FileView pane width proportion
+    mPaneProportions[1] = 0.34f; // SceneView pane width proportion
+    mPaneProportions[2] = 0.33f; // SceneTree pane width proportion
 
     // Register the main window class. If registration fails, an error is logged.
     if (!RegisterWindowClass()) {
@@ -59,7 +63,7 @@ ATOM MainWindow::RegisterWindowClass() {
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.lpfnWndProc = StaticWindowProc;            // Our static message handler
-    wc.hInstance = m_hInstance;                   // Instance handle for the application
+    wc.hInstance = mHInstance;                    // Instance handle for the application
     wc.lpszClassName = MAIN_CLASS_NAME;           // Unique class name
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW); // Standard arrow cursor
     wc.hbrBackground = nullptr;         // No default background erase; children will paint
@@ -67,10 +71,10 @@ ATOM MainWindow::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"RegisterClassEx failed for MAIN_CLASS_NAME. Error: " +
-                                    std::to_wstring(errorCode) + L"\n";
-        OutputDebugString(errorMessage.c_str());
+        std::wostringstream errorMessage;
+        errorMessage << L"RegisterClassEx failed for MAIN_CLASS_NAME. Error: "
+                     << std::to_wstring(GetLastError()) << L"\n";
+        OutputDebugString(errorMessage.str().c_str());
     }
     return atom;
 }
@@ -84,18 +88,18 @@ ATOM MainWindow::RegisterChildWindowClass(LPCWSTR className,
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.lpfnWndProc = wndProc;
-    wc.hInstance = m_hInstance;
+    wc.hInstance = mHInstance;
     wc.lpszClassName = className;
     wc.hCursor = hCursor;
     wc.hbrBackground = hbrBackground; // Can be a solid brush for splitters
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"RegisterClassEx failed for child class " +
-                                    std::wstring(className) + L". Error: " +
-                                    std::to_wstring(errorCode) + L"\n";
-        OutputDebugString(errorMessage.c_str());
+        std::wostringstream errorMessage;
+        errorMessage << L"RegisterClassEx failed for child class "
+                     << std::wstring(className) + L". Error: "
+                     << std::to_wstring(GetLastError()) + L"\n";
+        OutputDebugString(errorMessage.str().c_str());
     }
     return atom;
 }
@@ -106,16 +110,16 @@ bool MainWindow::CreateMainWindow() {
     // Verify that the main window class has been registered.
     WNDCLASSEX wcInfo = {};
     wcInfo.cbSize = sizeof(WNDCLASSEX);
-    if (!GetClassInfoEx(m_hInstance, MAIN_CLASS_NAME, &wcInfo)) {
-        DWORD errorCode = GetLastError();
-        std::wstring errorMessage = L"CreateMainWindow: Class '" + std::wstring(MAIN_CLASS_NAME) +
-                                    L"' is NOT registered! Error: " + std::to_wstring(errorCode) +
-                                    L"\n";
-        OutputDebugString(errorMessage.c_str());
+    if (!GetClassInfoEx(mHInstance, MAIN_CLASS_NAME, &wcInfo)) {
+        std::wostringstream errorMessage;
+        errorMessage << L"CreateMainWindow: Class '"
+                     << std::wstring(MAIN_CLASS_NAME) + L"' is NOT registered! Error: "
+                     << std::to_wstring(GetLastError()) + L"\n";
+        OutputDebugString(errorMessage.str().c_str());
         return false;
     }
 
-    m_hWnd = CreateWindowEx(
+    mHWnd = CreateWindowEx(
         0,               // Optional window extended styles
         MAIN_CLASS_NAME, // Name of the registered window class
         L"DXMiniApp",    // Window title bar text
@@ -125,19 +129,19 @@ bool MainWindow::CreateMainWindow() {
         DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, // Default window size
         nullptr,                                     // No parent window (top-level window)
         nullptr,                                     // No menu
-        m_hInstance,                                 // Instance handle
+        mHInstance,                                  // Instance handle
         this // Pointer to 'this' passed as creation parameter (retrieved in WM_NCCREATE)
     );
 
-    if (m_hWnd == nullptr) {
+    if (mHWnd == nullptr) {
         OutputDebugString(
             (L"CreateWindowEx failed. Error: " + std::to_wstring(GetLastError()) + L"\n").c_str());
         return false;
     }
 
     // Display and update the main window.
-    ShowWindow(m_hWnd, SW_SHOWDEFAULT);
-    UpdateWindow(m_hWnd);
+    ShowWindow(mHWnd, SW_SHOWDEFAULT);
+    UpdateWindow(mHWnd);
 
     return true;
 }
@@ -147,17 +151,17 @@ bool MainWindow::CreateMainWindow() {
 // It retrieves the 'this' pointer of the MainWindow instance and then
 // dispatches the message to the instance-specific HandleMessage method.
 LRESULT CALLBACK MainWindow::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    MainWindow *pThis = nullptr;
+    MainWindow* pThis = nullptr;
 
     if (uMsg == WM_NCCREATE) {
         // On WM_NCCREATE, the CREATESTRUCT contains the 'this' pointer in lpCreateParams.
-        CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT *>(lParam);
-        pThis = static_cast<MainWindow *>(pCreate->lpCreateParams);
+        CREATESTRUCT* pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
+        pThis = static_cast<MainWindow*>(pCreate->lpCreateParams);
         // Store the 'this' pointer in the window's user data for future messages.
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     } else {
         // For all other messages, retrieve the 'this' pointer from the window's user data.
-        pThis = reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        pThis = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     }
 
     // If a valid instance pointer is found, let the instance handle the message.
@@ -210,8 +214,7 @@ LRESULT MainWindow::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_NOTIFY: {
         // Handles notifications from common controls (e.g., TreeView selection changes).
         LPNMHDR lpnmh = reinterpret_cast<LPNMHDR>(lParam);
-        if (m_pFileView && lpnmh->hwndFrom == m_pFileView->GetHWND() &&
-            lpnmh->code == TVN_SELCHANGED) {
+        if (mFileView && lpnmh->hwndFrom == mFileView->GetHWND() && lpnmh->code == TVN_SELCHANGED) {
             // Placeholder for file selection logic.
             // You would typically call a method on FileView or pass parameters for
             // SceneView/SceneTree update. Example:
@@ -271,31 +274,31 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
 
     // Create instances of our view components using unique_ptr for automatic memory management.
     // and create the actual Windows controls for each view.
-    m_fileProvider = std::make_unique<Util::WorkingDirFileProvider>();
+    mFileProvider = std::make_unique<Util::WorkingDirFileProvider>();
 
-    m_pFileView = std::make_unique<FileView>(*m_fileProvider);
-    if (m_pFileView)
-        m_pFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView));
+    mFileView = std::make_unique<FileView>(*mFileProvider);
+    if (mFileView)
+        mFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView));
 
-    m_pSceneView = std::make_unique<SceneView>();
-    if (m_pSceneView)
-        m_pSceneView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneView));
+    mSceneView = std::make_unique<SceneView>();
+    if (mSceneView)
+        mSceneView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneView));
 
-    m_pSceneTree = std::make_unique<SceneTree>();
-    if (m_pSceneTree)
-        m_pSceneTree->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneTree));
+    mSceneTree = std::make_unique<SceneTree>();
+    if (mSceneTree)
+        mSceneTree->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneTree));
 
     // Create the splitter controls.
     HMENU splitter1Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter1));
-    m_hwndSplitter1 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
-                                     hWnd, splitter1Id, m_hInstance, nullptr);
-    if (!m_hwndSplitter1)
+    mHwndSplitter1 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
+                                    hWnd, splitter1Id, mHInstance, nullptr);
+    if (!mHwndSplitter1)
         OutputDebugString(L"ERROR: Failed to create m_hwndSplitter1!\n");
 
     HMENU splitter2Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter2));
-    m_hwndSplitter2 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
-                                     hWnd, splitter2Id, m_hInstance, nullptr);
-    if (!m_hwndSplitter2)
+    mHwndSplitter2 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
+                                    hWnd, splitter2Id, mHInstance, nullptr);
+    if (!mHwndSplitter2)
         OutputDebugString(L"ERROR: Failed to create m_hwndSplitter2!\n");
 
     // Perform initial layout after all controls are created.
@@ -318,42 +321,42 @@ void MainWindow::LayoutChildViews(int clientWidth, int clientHeight) {
 
     // Calculate initial pane widths based on proportions.
     // clientWidth is the total usable width for all panes and splitters.
-    int fileListWidth = static_cast<int>(clientWidth * m_paneProportions[0]);
-    int sceneViewWidth = static_cast<int>(clientWidth * m_paneProportions[1]);
+    int fileListWidth = static_cast<int>(clientWidth * mPaneProportions[0]);
+    int sceneViewWidth = static_cast<int>(clientWidth * mPaneProportions[1]);
     // SceneTree width will be the remaining space after FileView, Splitter1, SceneView, and
     // Splitter2.
 
     int xPos = 0; // Current X-position for placing the next control
 
     // Layout FileView (leftmost pane)
-    if (m_pFileView && m_pFileView->GetHWND()) {
-        SetWindowPos(m_pFileView->GetHWND(), nullptr, xPos, 0, fileListWidth, clientHeight,
+    if (mFileView && mFileView->GetHWND()) {
+        SetWindowPos(mFileView->GetHWND(), nullptr, xPos, 0, fileListWidth, clientHeight,
                      SWP_NOZORDER);
     }
     xPos += fileListWidth;
 
     // Layout Splitter 1 (between FileView and SceneView)
-    if (m_hwndSplitter1) {
-        SetWindowPos(m_hwndSplitter1, nullptr, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
+    if (mHwndSplitter1) {
+        SetWindowPos(mHwndSplitter1, nullptr, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
     }
     xPos += SPLITTER_WIDTH;
 
     // Layout SceneView (middle pane)
-    if (m_pSceneView && m_pSceneView->GetHWND()) {
-        SetWindowPos(m_pSceneView->GetHWND(), nullptr, xPos, 0, sceneViewWidth, clientHeight,
+    if (mSceneView && mSceneView->GetHWND()) {
+        SetWindowPos(mSceneView->GetHWND(), nullptr, xPos, 0, sceneViewWidth, clientHeight,
                      SWP_NOZORDER);
     }
     xPos += sceneViewWidth;
 
     // Layout Splitter 2 (between SceneView and SceneTree)
-    if (m_hwndSplitter2) {
-        SetWindowPos(m_hwndSplitter2, nullptr, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
+    if (mHwndSplitter2) {
+        SetWindowPos(mHwndSplitter2, nullptr, xPos, 0, SPLITTER_WIDTH, clientHeight, SWP_NOZORDER);
     }
     xPos += SPLITTER_WIDTH;
 
     // Layout SceneTree (rightmost pane, takes up the remaining width)
-    if (m_pSceneTree && m_pSceneTree->GetHWND()) {
-        SetWindowPos(m_pSceneTree->GetHWND(), nullptr, xPos, 0, clientWidth - xPos, clientHeight,
+    if (mSceneTree && mSceneTree->GetHWND()) {
+        SetWindowPos(mSceneTree->GetHWND(), nullptr, xPos, 0, clientWidth - xPos, clientHeight,
                      SWP_NOZORDER);
     }
 }
@@ -365,8 +368,8 @@ void MainWindow::LayoutChildViews(int clientWidth, int clientHeight) {
 LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     // Get the MainWindow instance associated with the parent window of the splitter.
     HWND hwndParent = GetParent(hwnd);
-    MainWindow *pMainWindow =
-        reinterpret_cast<MainWindow *>(GetWindowLongPtr(hwndParent, GWLP_USERDATA));
+    MainWindow* pMainWindow =
+        reinterpret_cast<MainWindow*>(GetWindowLongPtr(hwndParent, GWLP_USERDATA));
 
     // If the MainWindow instance isn't found (shouldn't happen in a well-behaved app),
     // fall back to default processing.
@@ -380,23 +383,23 @@ LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         // When the left mouse button is pressed on a splitter, capture the mouse
         // to receive all subsequent mouse messages, even if the cursor leaves the splitter.
         SetCapture(hwnd);
-        pMainWindow->m_lastMouseX = LOWORD(lParam); // Store the initial mouse X position.
+        pMainWindow->mLastMouseX = LOWORD(lParam); // Store the initial mouse X position.
 
         // Determine which splitter is being dragged based on its HWND.
-        if (hwnd == pMainWindow->m_hwndSplitter1) {
-            pMainWindow->m_draggingSplitter = 1;
-        } else if (hwnd == pMainWindow->m_hwndSplitter2) {
-            pMainWindow->m_draggingSplitter = 2;
+        if (hwnd == pMainWindow->mHwndSplitter1) {
+            pMainWindow->mDraggingSplitter = 1;
+        } else if (hwnd == pMainWindow->mHwndSplitter2) {
+            pMainWindow->mDraggingSplitter = 2;
         }
         return 0; // Message handled
     }
     case WM_MOUSEMOVE: {
-        bool isDragging = (pMainWindow->m_draggingSplitter != 0);
+        bool isDragging = (pMainWindow->mDraggingSplitter != 0);
         bool isLeftButtonDown = (wParam & MK_LBUTTON);
 
         if (isDragging && isLeftButtonDown) {
             const int currentMouseX = LOWORD(lParam);
-            const int deltaX = currentMouseX - pMainWindow->m_lastMouseX;
+            const int deltaX = currentMouseX - pMainWindow->mLastMouseX;
 
             RECT rcClient;
             GetClientRect(hwndParent, &rcClient);
@@ -406,38 +409,38 @@ LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
             if (clientWidth == 0)
                 return 0;
 
-            if (pMainWindow->m_draggingSplitter == 1) { // Dragging Splitter1
+            if (pMainWindow->mDraggingSplitter == 1) { // Dragging Splitter1
                 float mouseDeltaRatio = static_cast<float>(deltaX) / clientWidth;
-                float newFileViewProportion = pMainWindow->m_paneProportions[0] + mouseDeltaRatio;
-                float newSceneViewProportion = pMainWindow->m_paneProportions[1] - mouseDeltaRatio;
+                float newFileViewProportion = pMainWindow->mPaneProportions[0] + mouseDeltaRatio;
+                float newSceneViewProportion = pMainWindow->mPaneProportions[1] - mouseDeltaRatio;
 
                 const float MIN_PANE_PROPORTION = 0.1f; // 10% minimum width
 
                 if (newFileViewProportion > MIN_PANE_PROPORTION &&
                     newSceneViewProportion > MIN_PANE_PROPORTION) {
-                    pMainWindow->m_paneProportions[0] = newFileViewProportion;
-                    pMainWindow->m_paneProportions[1] = newSceneViewProportion;
+                    pMainWindow->mPaneProportions[0] = newFileViewProportion;
+                    pMainWindow->mPaneProportions[1] = newSceneViewProportion;
                     // Recalculate the third pane's proportion to ensure the sum remains 1.0f.
-                    pMainWindow->m_paneProportions[2] = 1.0f - (pMainWindow->m_paneProportions[0] +
-                                                                pMainWindow->m_paneProportions[1]);
+                    pMainWindow->mPaneProportions[2] = 1.0f - (pMainWindow->mPaneProportions[0] +
+                                                               pMainWindow->mPaneProportions[1]);
                 }
-            } else if (pMainWindow->m_draggingSplitter == 2) { // Dragging Splitter2
+            } else if (pMainWindow->mDraggingSplitter == 2) { // Dragging Splitter2
                 float mouseDeltaRatio = static_cast<float>(deltaX) / clientWidth;
-                float newSceneViewProportion = pMainWindow->m_paneProportions[1] + mouseDeltaRatio;
-                float newSceneTreeProportion = pMainWindow->m_paneProportions[2] - mouseDeltaRatio;
+                float newSceneViewProportion = pMainWindow->mPaneProportions[1] + mouseDeltaRatio;
+                float newSceneTreeProportion = pMainWindow->mPaneProportions[2] - mouseDeltaRatio;
 
                 const float MIN_PANE_PROPORTION = 0.1f; // 10% minimum width
 
                 if (newSceneViewProportion > MIN_PANE_PROPORTION &&
                     newSceneTreeProportion > MIN_PANE_PROPORTION) {
-                    pMainWindow->m_paneProportions[1] = newSceneViewProportion;
-                    pMainWindow->m_paneProportions[2] = newSceneTreeProportion;
-                    pMainWindow->m_paneProportions[0] = 1.0f - (pMainWindow->m_paneProportions[1] +
-                                                                pMainWindow->m_paneProportions[2]);
+                    pMainWindow->mPaneProportions[1] = newSceneViewProportion;
+                    pMainWindow->mPaneProportions[2] = newSceneTreeProportion;
+                    pMainWindow->mPaneProportions[0] = 1.0f - (pMainWindow->mPaneProportions[1] +
+                                                               pMainWindow->mPaneProportions[2]);
                 }
             }
 
-            pMainWindow->m_lastMouseX = currentMouseX;
+            pMainWindow->mLastMouseX = currentMouseX;
             pMainWindow->LayoutChildViews(clientWidth, clientHeight);
 
             InvalidateRect(hwndParent, nullptr, TRUE);
@@ -448,7 +451,7 @@ LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_LBUTTONUP: {
         // When the left mouse button is released, release mouse capture and reset dragging state.
         ReleaseCapture();
-        pMainWindow->m_draggingSplitter = 0;
+        pMainWindow->mDraggingSplitter = 0;
         return 0; // Message handled
     }
     case WM_SETCURSOR: {

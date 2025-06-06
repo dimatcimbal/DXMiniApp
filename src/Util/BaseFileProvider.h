@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// src/Util/BaseFileProvider.h
+// Created by dtcimbal on 2/06/2025.
+#pragma once
 #include <filesystem> // For std::filesystem::directory_iterator
 #include <string>
 
@@ -15,7 +17,7 @@ class FileIterator {
     using iterator_category = std::input_iterator_tag;
     using value_type = FileEntry;
     using difference_type = std::ptrdiff_t;
-    using pointer = const FileEntry *;
+    using pointer = const FileEntry*;
     using reference = const FileEntry&;
 
     FileIterator() = default;
@@ -74,7 +76,7 @@ class FileIterator {
 class BaseFileProvider {
   public:
     explicit BaseFileProvider(std::filesystem::path directoryPath)
-        : m_directoryPath(std::move(directoryPath)) {
+        : mDirectoryPath(std::move(directoryPath)) {
     }
 
     virtual ~BaseFileProvider() = default;
@@ -89,7 +91,7 @@ class BaseFileProvider {
     virtual FileEntry getCurrentDirectory() const = 0;
 
   protected:
-    std::filesystem::path m_directoryPath; // The directory path to be iterated
+    std::filesystem::path mDirectoryPath; // The directory path to be iterated
 };
 
 } // namespace Util
