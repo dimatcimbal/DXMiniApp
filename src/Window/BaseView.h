@@ -1,4 +1,5 @@
 ﻿// src/Window/BaseView.h
+// Created by dtcimbal on 2/06/2025.
 #pragma once
 
 #include <Windows.h>
@@ -7,7 +8,7 @@
 // It manages the HWND for the specific view.
 class BaseView {
   public:
-    BaseView() : m_hParent(nullptr), m_hWnd(nullptr) {
+    BaseView() : m_hParent(nullptr), mHWnd(nullptr) {
     }
     // Virtual destructor is important for polymorphism.
     // No need to call DestroyWindow here, as Windows automatically destroys
@@ -16,7 +17,7 @@ class BaseView {
 
     // Returns the HWND of this view component.
     HWND GetHWND() const {
-        return m_hWnd;
+        return mHWnd;
     }
 
     // hParent: The handle of the parent window.
@@ -24,7 +25,7 @@ class BaseView {
     bool Create(HWND hParent, UINT id) {
         m_hParent = hParent;
         if (!OnCreate(hParent, id)) {
-            m_hWnd = nullptr;
+            mHWnd = nullptr;
             return false;
         }
         return true;
@@ -33,8 +34,8 @@ class BaseView {
     // Virtual method to handle resizing of the view component.
     // Derived classes can override this for more complex internal layouts.
     virtual void OnSize(int x, int y, int width, int height) {
-        if (m_hWnd) {
-            MoveWindow(m_hWnd, x, y, width, height, TRUE);
+        if (mHWnd) {
+            MoveWindow(mHWnd, x, y, width, height, TRUE);
         }
     }
 
@@ -47,5 +48,5 @@ class BaseView {
 
   protected:
     HWND m_hParent;
-    HWND m_hWnd; // The HWND for this specific view component.
+    HWND mHWnd; // The HWND for this specific view component.
 };

@@ -29,7 +29,7 @@ BinPackParameters: false
 CompactNamespaces: false
 
 # Pointer and Reference Alignment
-PointerAlignment: Right # This places the '*' next to the type (e.g., int* p;)
+PointerAlignment: Left # This places the '*' next to the type (e.g., int* p;)
 ReferenceAlignment: Left # You might also want this for references (e.g., int& r;), though Right is also common.
 
 # Other common settings
