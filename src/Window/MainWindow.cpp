@@ -10,9 +10,11 @@
 
 #include <sstream>
 
+#include "../Util/Debug.h"
+#include "Files/WorkingDirFileProvider.h"
 #include "SceneTree.h"
 #include "SceneView.h"
-#include "Util/WorkingDirFileProvider.h"
+#include "Util/Debug.h"
 
 // Anonymous namespace for constants internal to this compilation unit
 namespace {
@@ -36,14 +38,14 @@ MainWindow::MainWindow()
 
     // Register the main window class. If registration fails, an error is logged.
     if (!RegisterWindowClass()) {
-        OutputDebugString(L"ERROR: Failed to register main window class!\n");
+        DEBUGPRINT(L"ERROR: Failed to register main window class!\n");
         // In a real application, you might throw an exception or exit here.
         return;
     }
 
     // Create the main application window. If creation fails, an error is logged.
     if (!CreateMainWindow()) {
-        OutputDebugString(L"ERROR: Failed to create main window!\n");
+        DEBUGPRINT(L"ERROR: Failed to create main window!\n");
         // In a real application, you might throw an exception or exit here.
         return;
     }
@@ -71,10 +73,8 @@ ATOM MainWindow::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        std::wostringstream errorMessage;
-        errorMessage << L"RegisterClassEx failed for MAIN_CLASS_NAME. Error: "
-                     << std::to_wstring(GetLastError()) << L"\n";
-        OutputDebugString(errorMessage.str().c_str());
+        DEBUGPRINT(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
+                   std::to_wstring(GetLastError()).c_str());
     }
     return atom;
 }
@@ -95,11 +95,8 @@ ATOM MainWindow::RegisterChildWindowClass(LPCWSTR className,
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        std::wostringstream errorMessage;
-        errorMessage << L"RegisterClassEx failed for child class "
-                     << std::wstring(className) + L". Error: "
-                     << std::to_wstring(GetLastError()) + L"\n";
-        OutputDebugString(errorMessage.str().c_str());
+        DEBUGPRINT(L"RegisterClassEx failed for child class %s. Error: %s", className,
+                   std::to_wstring(GetLastError()).c_str());
     }
     return atom;
 }
@@ -111,11 +108,8 @@ bool MainWindow::CreateMainWindow() {
     WNDCLASSEX wcInfo = {};
     wcInfo.cbSize = sizeof(WNDCLASSEX);
     if (!GetClassInfoEx(mHInstance, MAIN_CLASS_NAME, &wcInfo)) {
-        std::wostringstream errorMessage;
-        errorMessage << L"CreateMainWindow: Class '"
-                     << std::wstring(MAIN_CLASS_NAME) + L"' is NOT registered! Error: "
-                     << std::to_wstring(GetLastError()) + L"\n";
-        OutputDebugString(errorMessage.str().c_str());
+        DEBUGPRINT(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
+                   std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
@@ -134,8 +128,7 @@ bool MainWindow::CreateMainWindow() {
     );
 
     if (mHWnd == nullptr) {
-        OutputDebugString(
-            (L"CreateWindowEx failed. Error: " + std::to_wstring(GetLastError()) + L"\n").c_str());
+        DEBUGPRINT((L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError())).c_str());
         return false;
     }
 
@@ -247,13 +240,13 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     // --- Create the Menu Bar ---
     HMENU hMenuBar = CreateMenu();
     if (hMenuBar == nullptr) {
-        OutputDebugString(L"ERROR: Failed to create menu bar!\n");
+        DEBUGPRINT(L"ERROR: Failed to create menu bar!\n");
         return;
     }
 
     HMENU hSceneMenu = CreatePopupMenu();
     if (hSceneMenu == nullptr) {
-        OutputDebugString(L"ERROR: Failed to create scene menu!\n");
+        DEBUGPRINT(L"ERROR: Failed to create scene menu!\n");
         DestroyMenu(hMenuBar); // Clean up
         return;
     }
@@ -266,7 +259,7 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     HCURSOR resizeCursor = LoadCursorW(nullptr, IDC_SIZEWE);
     HBRUSH splitterBrush = CreateSolidBrush(RGB(100, 100, 100));
     if (!RegisterChildWindowClass(L"SplitterWindow", SplitterProc, resizeCursor, splitterBrush)) {
-        OutputDebugString(L"ERROR: Failed to register SplitterWindow class!\n");
+        DEBUGPRINT(L"ERROR: Failed to register SplitterWindow class!\n");
         DeleteObject(splitterBrush); // Clean up brush
         return;
     }
@@ -274,7 +267,7 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
 
     // Create instances of our view components using unique_ptr for automatic memory management.
     // and create the actual Windows controls for each view.
-    mFileProvider = std::make_unique<Util::WorkingDirFileProvider>();
+    mFileProvider = std::make_unique<WorkingDirFileProvider>();
 
     mFileView = std::make_unique<FileView>(*mFileProvider);
     if (mFileView)
@@ -293,13 +286,13 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     mHwndSplitter1 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
                                     hWnd, splitter1Id, mHInstance, nullptr);
     if (!mHwndSplitter1)
-        OutputDebugString(L"ERROR: Failed to create m_hwndSplitter1!\n");
+        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter1!\n");
 
     HMENU splitter2Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter2));
     mHwndSplitter2 = CreateWindowEx(0, L"SplitterWindow", L"", WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
                                     hWnd, splitter2Id, mHInstance, nullptr);
     if (!mHwndSplitter2)
-        OutputDebugString(L"ERROR: Failed to create m_hwndSplitter2!\n");
+        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter2!\n");
 
     // Perform initial layout after all controls are created.
     RECT rcClient;
@@ -374,7 +367,7 @@ LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     // If the MainWindow instance isn't found (shouldn't happen in a well-behaved app),
     // fall back to default processing.
     if (!pMainWindow) {
-        OutputDebugString(L"ERROR: SplitterProc failed to retrieve MainWindow instance!\n");
+        DEBUGPRINT(L"ERROR: SplitterProc failed to retrieve MainWindow instance!\n");
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 

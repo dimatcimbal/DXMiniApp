@@ -3,12 +3,13 @@
 #include "FileView.h"
 #include <commctrl.h> // Required for ListView functions (e.g., ListView_InsertItem)
 #include <filesystem>
-#include "Util/WorkingDirFileProvider.h"
+#include "Files/WorkingDirFileProvider.h"
+#include "Util/Debug.h"
 
 // Link with Comctl32.lib for common controls
 #pragma comment(lib, "Comctl32.lib")
 
-FileView::FileView(Util::BaseFileProvider& fileProvider) : mFileProvider(fileProvider) {
+FileView::FileView(BaseFileProvider& fileProvider) : mFileProvider(fileProvider) {
 }
 
 FileView::~FileView() = default;
@@ -35,7 +36,7 @@ bool FileView::OnCreate(HWND hParent, UINT id) {
                            GetModuleHandle(nullptr), nullptr);
 
     if (mHWnd == nullptr) {
-        OutputDebugString(L"Failed to create FileView TreeView.\n"); // Corrected message
+        DEBUGPRINT(L"Failed to create FileView TreeView.\n");
         return false;
     }
 
@@ -51,7 +52,7 @@ void FileView::PopulateFileView() {
 
     try {
         // Get the current directory as a FileEntry directly from the file provider
-        Util::FileEntry rootEntry = mFileProvider.getCurrentDirectory();
+        FileEntry rootEntry = mFileProvider.getCurrentDirectory();
         std::wstring rootDisplayName = rootEntry.name;
 
         // Structure to insert the root item (current folder)

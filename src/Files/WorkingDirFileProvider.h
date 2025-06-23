@@ -5,8 +5,6 @@
 #include <filesystem>
 #include "BaseFileProvider.h"
 
-namespace Util {
-
 // Provides access to files within the current working directory, supporting range-based for loops.
 class WorkingDirFileProvider : public BaseFileProvider {
   public:
@@ -19,5 +17,3 @@ class WorkingDirFileProvider : public BaseFileProvider {
     FileIterator end() override;
     FileEntry getCurrentDirectory() const override;
 };
-
-} // namespace Util

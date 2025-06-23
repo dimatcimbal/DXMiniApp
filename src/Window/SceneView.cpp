@@ -52,8 +52,8 @@ LRESULT CALLBACK SceneView::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam
 LRESULT SceneView::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_SIZE: {
-        int width = LOWORD(lParam);
-        int height = HIWORD(lParam);
+        int width = LOWORD(lParam);  // int width = (UINT)(UINT64)lParam & 0xFFFF;
+        int height = HIWORD(lParam); // int height = (UINT)(UINT64)lParam >> 16;
         OnSize(width, height);
         return 0; // Message handled
     }
@@ -104,7 +104,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
         return false;
     }
 
-    mDevice = std::make_unique<Graphics::Device>(mHWnd);
+    mDevice = std::make_unique<Device>(mHWnd);
     if FAILED (!mDevice->OnCreate(0, 0)) {
         OutputDebugString(L"Failed to initialize a Graphics::Device.\n");
         // Consider destroying the window here if device creation is critical

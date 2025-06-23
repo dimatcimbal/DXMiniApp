@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <filesystem>
 
-namespace Util {
+#include "../Util/Debug.h"
 
 // --- WorkingDirFileProvider Implementation ---
 
@@ -14,9 +14,8 @@ FileIterator WorkingDirFileProvider::begin() {
         return FileIterator(std::filesystem::directory_iterator(mDirectoryPath));
     } catch (const std::filesystem::filesystem_error& e) {
         // Handle cases where directory cannot be opened (e.g., permissions)
-        OutputDebugStringW((L"Filesystem error in WorkingDirFileProvider::begin: " +
-                            std::filesystem::path(e.what()).wstring() + L"\n")
-                               .c_str());
+        DEBUGPRINT(L"Filesystem error in WorkingDirFileProvider::begin: %s.\n",
+                   std::filesystem::path(e.what()).wstring().c_str());
         // Return an end sentinel
         return FileIterator();
     }
@@ -34,5 +33,3 @@ FileEntry WorkingDirFileProvider::getCurrentDirectory() const {
                                                    : mDirectoryPath.filename().wstring();
     return entry;
 }
-
-} // namespace Util

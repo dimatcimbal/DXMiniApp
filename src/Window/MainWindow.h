@@ -6,7 +6,7 @@
 #include <memory> // For std::unique_ptr
 #include <string> // For std::wstring
 
-#include "Util/BaseFileProvider.h"
+#include "Files/BaseFileProvider.h"
 
 // Forward declarations for view component classes
 // This is a good practice to avoid circular dependencies and speed up compilation.
@@ -70,7 +70,7 @@ class MainWindow {
     std::unique_ptr<FileView> mFileView;
     std::unique_ptr<SceneTree> mSceneTree;
     std::unique_ptr<SceneView> mSceneView;
-    std::unique_ptr<Util::BaseFileProvider> mFileProvider;
+    std::unique_ptr<BaseFileProvider> mFileProvider;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the main application window.

@@ -22,7 +22,7 @@ class SceneView : public BaseView {
     bool OnCreate(HWND hParent, UINT id) override;
 
   private:
-    unique_ptr<Graphics::Device> mDevice;
+    unique_ptr<Device> mDevice;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the SceneView window.

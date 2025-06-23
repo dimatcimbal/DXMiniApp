@@ -3,11 +3,11 @@
 #pragma once
 
 #include "BaseView.h"
-#include "Util/BaseFileProvider.h"
+#include "Files/BaseFileProvider.h"
 
 class FileView : public BaseView {
   public:
-    FileView(Util::BaseFileProvider& fileProvider);
+    FileView(BaseFileProvider& fileProvider);
     ~FileView() override;
 
     // Overrides BaseView::Create to create the ListView control.
@@ -17,5 +17,5 @@ class FileView : public BaseView {
     void PopulateFileView();
 
   private:
-    Util::BaseFileProvider& mFileProvider;
+    BaseFileProvider& mFileProvider;
 };

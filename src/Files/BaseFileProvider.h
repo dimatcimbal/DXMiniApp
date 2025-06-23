@@ -4,8 +4,6 @@
 #include <filesystem> // For std::filesystem::directory_iterator
 #include <string>
 
-namespace Util {
-
 // Represents a single file entry found during iteration.
 struct FileEntry {
     std::wstring name;
@@ -93,5 +91,3 @@ class BaseFileProvider {
   protected:
     std::filesystem::path mDirectoryPath; // The directory path to be iterated
 };
-
-} // namespace Util
