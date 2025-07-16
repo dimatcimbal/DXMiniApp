@@ -3,8 +3,8 @@
 #include "FileView.h"
 #include <commctrl.h> // Required for ListView functions (e.g., ListView_InsertItem)
 #include <filesystem>
+#include "Common/Debug.h"
 #include "Files/WorkingDirFileProvider.h"
-#include "Util/Debug.h"
 
 // Link with Comctl32.lib for common controls
 #pragma comment(lib, "Comctl32.lib")

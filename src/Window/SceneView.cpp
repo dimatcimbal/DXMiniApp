@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <string> // For std::to_wstring
 
+#include "Graphics/Renderer.h"
+
 SceneView::SceneView() = default;
 
 SceneView::~SceneView() = default;
@@ -54,7 +56,7 @@ LRESULT SceneView::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_SIZE: {
         int width = LOWORD(lParam);  // int width = (UINT)(UINT64)lParam & 0xFFFF;
         int height = HIWORD(lParam); // int height = (UINT)(UINT64)lParam >> 16;
-        OnSize(width, height);
+        OnResize(width, height);
         return 0; // Message handled
     }
     case WM_CREATE: {
@@ -104,8 +106,18 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
         return false;
     }
 
+    RECT clientRect;
+    if (!GetClientRect(mHWnd, &clientRect)) {
+        OutputDebugString(L"ERROR: Failed to get client rect for SceneView window!\n");
+        DestroyWindow(mHWnd);
+        return false;
+    }
+
+    int width = clientRect.right - clientRect.left;
+    int height = clientRect.bottom - clientRect.top;
+
     mDevice = std::make_unique<Device>(mHWnd);
-    if FAILED (!mDevice->OnCreate(0, 0)) {
+    if (!mDevice->CreateRenderer(width, height, mRenderer)) {
         OutputDebugString(L"Failed to initialize a Graphics::Device.\n");
         // Consider destroying the window here if device creation is critical
         DestroyWindow(mHWnd);
@@ -116,9 +128,14 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
 }
 
 // Handles WM_SIZE messages for the SceneView window.
-void SceneView::OnSize(int displayWidth, int displayHeight) {
-    if (mDevice) {
-        // Pass the new dimensions to the graphics device for display resize.
-        mDevice->DisplayResize(displayWidth, displayHeight);
+void SceneView::OnResize(int Width, int Height) {
+    if (mRenderer) {
+        mRenderer->OnResize(Width, Height);
+    }
+}
+
+void SceneView::RenderScene(const std::unique_ptr<Camera>& pCamera) {
+    if (mRenderer) {
+        mRenderer->Draw(pCamera);
     }
 }

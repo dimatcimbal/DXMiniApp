@@ -1,0 +1,28 @@
+﻿//
+// Created by dtcimbal on 15/07/2025.
+#pragma once
+
+#include <d3d12.h>
+#include <memory>
+
+class SwapChain;
+class Camera;
+class CommandContext;
+
+class Renderer {
+  public:
+    Renderer(std::unique_ptr<CommandContext>&& pCommandContext,
+             std::unique_ptr<SwapChain>&& pSwapChain)
+        : mCommandContext(std::move(pCommandContext)), mSwapChain(std::move(pSwapChain)) {};
+    Renderer() = default;
+
+    bool OnResize(uint32_t NewWidth, uint32_t NewHeight);
+    bool Draw(const std::unique_ptr<Camera>& pCamera);
+
+  private:
+    std::unique_ptr<CommandContext> mCommandContext;
+    std::unique_ptr<SwapChain> mSwapChain;
+
+    D3D12_VIEWPORT mScreenViewport;
+    D3D12_RECT mScissorRect;
+};

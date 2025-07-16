@@ -20,9 +20,12 @@ class SceneView : public BaseView {
 
     // Overrides BaseView::Create to create a custom window for the scene.
     bool OnCreate(HWND hParent, UINT id) override;
+    void OnResize(int Width, int Height);
+    void RenderScene(const std::unique_ptr<Camera>& pCamera);
 
   private:
-    unique_ptr<Device> mDevice;
+    std::unique_ptr<Device> mDevice;
+    std::unique_ptr<Renderer> mRenderer;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the SceneView window.
@@ -34,7 +37,4 @@ class SceneView : public BaseView {
     // The instance-specific message handler where most of the window's message processing logic
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-    // Message Handlers
-    void OnSize(int displayWidth, int displayHeight);
 };

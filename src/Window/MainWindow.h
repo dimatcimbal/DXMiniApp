@@ -7,6 +7,7 @@
 #include <string> // For std::wstring
 
 #include "Files/BaseFileProvider.h"
+#include "Scene/Camera.h"
 
 // Forward declarations for view component classes
 // This is a good practice to avoid circular dependencies and speed up compilation.
@@ -59,8 +60,12 @@ class MainWindow {
     // layout) --- Recalculates and sets the positions of all child views based on current window
     // size and pane proportions.
     void LayoutChildViews(int clientWidth, int clientHeight);
+    int Run();
 
   private:
+    // Internal application update call
+    bool OnUpdate();
+
     // Main application window handle
     HWND mHWnd;
     // Instance handle for the application, obtained during creation.
@@ -71,6 +76,9 @@ class MainWindow {
     std::unique_ptr<SceneTree> mSceneTree;
     std::unique_ptr<SceneView> mSceneView;
     std::unique_ptr<BaseFileProvider> mFileProvider;
+
+    // 3D Scene
+    std::unique_ptr<Camera> mCamera;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the main application window.

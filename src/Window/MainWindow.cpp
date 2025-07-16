@@ -10,11 +10,11 @@
 
 #include <sstream>
 
-#include "../Util/Debug.h"
+#include "../Common/Debug.h"
+#include "Common/Debug.h"
 #include "Files/WorkingDirFileProvider.h"
 #include "SceneTree.h"
 #include "SceneView.h"
-#include "Util/Debug.h"
 
 // Anonymous namespace for constants internal to this compilation unit
 namespace {
@@ -298,6 +298,40 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     RECT rcClient;
     GetClientRect(hWnd, &rcClient);
     OnSize(rcClient.right, rcClient.bottom); // This calls LayoutChildViews
+}
+
+int MainWindow::Run() {
+    MSG msg = {};
+    // Loop as long as the application's OnUpdate() method says to continue
+    // AND as long as WM_QUIT has not been received.
+    // WM_QUIT takes precedence for a clean shutdown.
+    while (msg.message != WM_QUIT && OnUpdate()) {
+        // Process all pending Windows messages without blocking
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                break; // Exit the inner loop immediately if WM_QUIT is found
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+
+    // Ensure WM_QUIT's wParam is returned. If we exited due to OnUpdate() returning false
+    // *before* WM_QUIT was processed, msg.wParam might be 0.
+    // A robust way: if WM_QUIT was explicitly received, use its wParam. Otherwise, default to 0.
+    return (msg.message == WM_QUIT) ? static_cast<int>(msg.wParam) : 0;
+}
+
+bool MainWindow::OnUpdate() {
+    // TODO Handle user input
+    // TODO update the state/camera
+
+    // Draw the scene
+    if (mSceneView) {
+        mSceneView->RenderScene(mCamera);
+    }
+
+    return true;
 }
 
 // Handles the WM_SIZE message to resize child views and update splitter positions.

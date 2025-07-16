@@ -1,40 +1,57 @@
-﻿// src/Graphics/DescriptorHeap
-// Created by dtcimbal on 14/06/2025.
+﻿//
+// Created by dtcimbal on 16/07/2025.
 #pragma once
-
 #include <d3d12.h>
-#include <mutex>
-#include <stdint.h>
+#include <d3dx12.h>
+#include <memory>
+
 #include <wrl/client.h>
+
+#include "Common/NonCopyable.h"
+#include "Common/StackAllocatable.h"
+#include "DescriptorHeap.h"
 
 using Microsoft::WRL::ComPtr;
 
-class Device;
-
 class DescriptorHeap {
   public:
-    DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE Type,
-                   D3D12_DESCRIPTOR_HEAP_FLAGS Flags,
-                   uint32_t NumDescriptors,
-                   uint32_t DescriptorSize,
-                   ComPtr<ID3D12DescriptorHeap>&& pHeap)
-        : mType(Type), mFlags(Flags), mNumDescriptors(NumDescriptors),
-          mNumFreeDescriptors(NumDescriptors), mDescriptorSize(DescriptorSize),
-          mCurrentHeap(pHeap) {};
+    friend class HeapHandle;
 
+    DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE Type,
+                   uint32_t DescriptorSize,
+                   ComPtr<ID3D12DescriptorHeap> pDescriptorHeap)
+        : mType(Type), mDescriptorSize(DescriptorSize),
+          mDescriptorHeap(std::move(pDescriptorHeap)) {};
     ~DescriptorHeap() = default;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32_t Count = 1);
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const {
+        return mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    }
+
+    uint32_t Size() const {
+        return mDescriptorSize;
+    }
 
   private:
-    std::mutex mAllocationMutex;
-
     D3D12_DESCRIPTOR_HEAP_TYPE mType;
-    D3D12_DESCRIPTOR_HEAP_FLAGS mFlags;
-    uint32_t mNumDescriptors;
     uint32_t mDescriptorSize;
-    uint32_t mNumFreeDescriptors;
+    ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
+};
 
-    ComPtr<ID3D12DescriptorHeap> mCurrentHeap;
-    D3D12_CPU_DESCRIPTOR_HANDLE mCurrentHandle;
+class HeapHandle : NonCopyable, StackAllocatable {
+  public:
+    HeapHandle(std::unique_ptr<DescriptorHeap>& pDescriptorHeap)
+        : mDescriptorHeap(pDescriptorHeap),
+          mHeapHandle(pDescriptorHeap->GetCPUDescriptorHandleForHeapStart()) {};
+    ~HeapHandle() = default;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE Next() {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE retHandle = mHeapHandle;
+        mHeapHandle.Offset(1, mDescriptorHeap->Size());
+        return retHandle;
+    }
+
+  private:
+    std::unique_ptr<DescriptorHeap>& mDescriptorHeap;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE mHeapHandle;
 };

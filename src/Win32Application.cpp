@@ -19,14 +19,10 @@ Win32Application::~Win32Application() {
 
 int Win32Application::Run() const {
     if (!mMainWindow || mMainWindow->GetHWND() == nullptr) {
+        MessageBox(nullptr, L"MainWindow not initialized. Exiting.", L"Fatal Error",
+                   MB_OK | MB_ICONERROR);
         return 1; // Application cannot run without a main window.
     }
 
-    MSG msg = {};
-    while (GetMessage(&msg, nullptr, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return static_cast<int>(msg.wParam);
+    return mMainWindow->Run();
 }
