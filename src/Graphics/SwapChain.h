@@ -6,27 +6,36 @@
 #include <vector>
 #include <wrl/client.h>
 
+#include "../Resources/Resource.h"
 #include "DescriptorHeap.h"
-#include "Resource.h"
 
 using Microsoft::WRL::ComPtr;
 
+class Device;
+
 class SwapChain {
   public:
-    SwapChain(ComPtr<ID3D12Device>& pD3dDevice, ComPtr<IDXGISwapChain1>&& pSwapChain)
-        : mD3dDevice(pD3dDevice), mSwapChain1(std::move(pSwapChain)) {};
+    SwapChain(Device& pDevice,
+              std::unique_ptr<DescriptorHeap>& pRtvHeap,
+              uint32_t SwapChainBufferCount,
+              DXGI_FORMAT Format,
+              ComPtr<IDXGISwapChain1>&& pSwapChain)
+        : mDevice(pDevice), mRtvHeap(pRtvHeap), mSwapChainBufferCount(SwapChainBufferCount),
+          mSwapChainBuffers{mSwapChainBufferCount}, mFormat(Format), mDxgiSwapChain1(std::move(pSwapChain)) {};
     ~SwapChain() = default;
 
-    bool OnResize(uint32_t NewWidth, uint32_t NewHeight);
+    bool Resize(uint32_t NewWidth, uint32_t NewHeight);
 
   private:
-    static constexpr uint32_t SwapChainBufferCount = 3;
+    // Not owning resources.
+    Device& mDevice;
+    std::unique_ptr<DescriptorHeap>& mRtvHeap;
 
-    std::vector<std::unique_ptr<Resource>> mSwapChainBuffer{SwapChainBufferCount};
-    ComPtr<IDXGISwapChain1> mSwapChain1;
-    ComPtr<ID3D12Device>& mD3dDevice;
-    std::unique_ptr<DescriptorHeap> mRtvHeap;
+    // Owning resources.
+    uint32_t mSwapChainBufferCount;
+    std::vector<std::unique_ptr<Resource>> mSwapChainBuffers;
+    ComPtr<IDXGISwapChain1> mDxgiSwapChain1;
 
-    DXGI_FORMAT mBackBufferFormat{DXGI_FORMAT_R8G8B8A8_UNORM};
+    DXGI_FORMAT mFormat;
     int mCurrBuffer = 0;
 };

@@ -16,6 +16,10 @@ class CommandContext {
           mCommandList(CommandList) {};
     ~CommandContext() = default;
 
+    ID3D12CommandQueue* GetCommandQueue() const {
+        return mCommandQueue.Get();
+    }
+
     bool SetViewportAndScissor(const D3D12_VIEWPORT& vp, const D3D12_RECT& rect);
     bool Reset();
 

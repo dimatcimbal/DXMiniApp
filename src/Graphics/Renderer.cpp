@@ -9,6 +9,8 @@
 #include "Common/Debug.h"
 #include "DescriptorHeap.h"
 #include "SwapChain.h"
+#include "DepthBuffer.h"
+
 
 bool Renderer::Draw(const std::unique_ptr<Camera>& pCamera) {
 
@@ -30,7 +32,15 @@ bool Renderer::OnResize(uint32_t Width, uint32_t Height) {
 
     // mCommandContext.WaitForIdle();
 
-    mSwapChain->OnResize(Width, Height);
+    if (!mSwapChain->Resize(Width, Height)) {
+        DEBUGPRINT(L"Failed to resize swap chain buffers.\n");
+        return false;
+    }
+
+    if (!mDepthBuffer->Resize(Width, Height)) {
+        DEBUGPRINT(L"Failed to resize depth buffer.\n");
+        return false;
+    }
 
     // mCommandContext.WaitForIdle();
 

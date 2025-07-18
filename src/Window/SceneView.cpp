@@ -124,6 +124,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
         return false;
     }
 
+    mRenderer->OnResize(width, height);
     return true;
 }
 
