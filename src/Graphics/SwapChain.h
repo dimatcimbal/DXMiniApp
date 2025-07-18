@@ -6,8 +6,8 @@
 #include <vector>
 #include <wrl/client.h>
 
-#include "../Resources/Resource.h"
-#include "DescriptorHeap.h"
+#include "Device/DescriptorHeap.h"
+#include "Resources/Resource.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -21,7 +21,8 @@ class SwapChain {
               DXGI_FORMAT Format,
               ComPtr<IDXGISwapChain1>&& pSwapChain)
         : mDevice(pDevice), mRtvHeap(pRtvHeap), mSwapChainBufferCount(SwapChainBufferCount),
-          mSwapChainBuffers{mSwapChainBufferCount}, mFormat(Format), mDxgiSwapChain1(std::move(pSwapChain)) {};
+          mSwapChainBuffers{mSwapChainBufferCount}, mFormat(Format),
+          mDxgiSwapChain1(std::move(pSwapChain)) {};
     ~SwapChain() = default;
 
     bool Resize(uint32_t NewWidth, uint32_t NewHeight);

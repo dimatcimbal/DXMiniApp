@@ -1,15 +1,14 @@
 ﻿//
 // Created by dtcimbal on 16/07/2025.
 #include "SwapChain.h"
-#include "Resources/Resource.h"
 #include "Common/Debug.h"
-#include "Device.h"
+#include "Device/DescriptorHeap.h"
+#include "Device/Device.h"
 
 bool SwapChain::Resize(uint32_t NewWidth, uint32_t NewHeight) {
 
     // Resize buffers
-    if FAILED (mDxgiSwapChain1->ResizeBuffers(mSwapChainBufferCount, NewWidth, NewHeight,
-                                              mFormat,
+    if FAILED (mDxgiSwapChain1->ResizeBuffers(mSwapChainBufferCount, NewWidth, NewHeight, mFormat,
                                               DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)) {
         DEBUGPRINT(L"Failed to resize swap chain buffers");
         return false;

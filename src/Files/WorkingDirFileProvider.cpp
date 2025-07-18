@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <filesystem>
 
-#include "../Common/Debug.h"
+#include "Common/Debug.h"
 
 // --- WorkingDirFileProvider Implementation ---
 

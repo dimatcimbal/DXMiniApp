@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "Graphics/Device.h"
+#include "Device/Device.h"
 
 using std::unique_ptr;
 

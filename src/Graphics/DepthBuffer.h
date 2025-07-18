@@ -1,9 +1,9 @@
 ﻿//
 // Created by dtcimbal on 19/07/2025.
 #pragma once
+#include <dxgi1_6.h>
 #include <memory>
 #include <wrl/client.h>
-#include <dxgi1_6.h>
 
 using Microsoft::WRL::ComPtr;
 

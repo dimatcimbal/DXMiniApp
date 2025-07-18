@@ -3,7 +3,7 @@
 #include "DepthBuffer.h"
 
 #include "Common/Debug.h"
-#include "Device.h"
+#include "Device/Device.h"
 
 bool DepthBuffer::Resize(uint32_t NewWidth, uint32_t NewHeight) {
     D3D12_CLEAR_VALUE ClearValue = {};

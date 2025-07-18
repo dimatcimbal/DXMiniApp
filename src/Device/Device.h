@@ -28,14 +28,14 @@ class Device {
     bool CreateRenderer(uint32_t Width, uint32_t Height, std::unique_ptr<Renderer>& OutRenderer);
 
     void CreateRenderTargetView(ComPtr<ID3D12Resource>& pD3dResource,
-                            D3D12_RENDER_TARGET_VIEW_DESC* rtvDesc,
-                            D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
-                            std::unique_ptr<Resource>& OutResource);
+                                D3D12_RENDER_TARGET_VIEW_DESC* rtvDesc,
+                                D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
+                                std::unique_ptr<Resource>& OutResource);
 
     void CreateDepthStencilView(ComPtr<ID3D12Resource>& pD3dResource,
-                                    D3D12_DEPTH_STENCIL_VIEW_DESC* dsvDesc,
-                                    D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle,
-                                    std::unique_ptr<Resource>& OutResource);
+                                D3D12_DEPTH_STENCIL_VIEW_DESC* dsvDesc,
+                                D3D12_CPU_DESCRIPTOR_HANDLE& dsvHandle,
+                                std::unique_ptr<Resource>& OutResource);
 
     bool CreateTextureResource(uint32_t Width,
                                uint32_t Height,

@@ -6,11 +6,10 @@
 #include <dxgi.h>
 #include <memory>
 
-#include "Color.h"
 #include "Common/Debug.h"
-#include "DepthBuffer.h"
-#include "Renderer.h"
-
+#include "Graphics/Color.h"
+#include "Graphics/DepthBuffer.h"
+#include "Graphics/Renderer.h"
 
 bool Device::CreateRenderer(uint32_t Width,
                             uint32_t Height,
@@ -51,12 +50,18 @@ bool Device::CreateRenderer(uint32_t Width,
         return false;
     }
 
-    // DepthBugffer creation
-    std::unique_ptr<DepthBuffer> pDepthBuffer = std::make_unique<DepthBuffer>(*this, mDsvHeap, DSV_FORMAT);
+    // DepthBuffer creation
+    std::unique_ptr<DepthBuffer> pDepthBuffer =
+        std::make_unique<DepthBuffer>(*this, mDsvHeap, DSV_FORMAT);
 
     // All good, create a Renderer now
     OutRenderer = std::make_unique<Renderer>(std::move(pContext), std::move(pSwapChain),
                                              std::move(pDepthBuffer));
+
+    if (!OutRenderer->OnResize(Width, Height)) {
+        DEBUGPRINT(L"Failed to initialize Renderer.\n");
+        return false;
+    }
 
     return true;
 }
@@ -173,17 +178,13 @@ bool Device::CreateSwapChain(uint32_t Width,
     OutSwapChain = std::make_unique<SwapChain>(*this, mRtvHeap, BufferCount, RTV_FORMAT,
                                                std::move(OutDxgiSwapChain1));
 
-    // if (!OutSwapChain->OnResize(Width, Height)) {
-    //     DEBUGPRINT(L"Failed to resize swap chain buffers.\n");
-    //     return false;
-    // }
     return true;
 }
 
 void Device::CreateRenderTargetView(ComPtr<ID3D12Resource>& pD3dResource,
-                            D3D12_RENDER_TARGET_VIEW_DESC* rtvDesc,
-                            D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
-                            std::unique_ptr<Resource>& OutResource) {
+                                    D3D12_RENDER_TARGET_VIEW_DESC* rtvDesc,
+                                    D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
+                                    std::unique_ptr<Resource>& OutResource) {
     mD3dDevice->CreateRenderTargetView(pD3dResource.Get(), rtvDesc, rtvHandle);
     OutResource = std::make_unique<Resource>(rtvHandle, std::move(pD3dResource));
 }

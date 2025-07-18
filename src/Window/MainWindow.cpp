@@ -10,7 +10,6 @@
 
 #include <sstream>
 
-#include "../Common/Debug.h"
 #include "Common/Debug.h"
 #include "Files/WorkingDirFileProvider.h"
 #include "SceneTree.h"

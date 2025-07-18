@@ -7,10 +7,8 @@
 #include "CommandObjects/CommandContext.h"
 #include "CommandObjects/LocalContext.h"
 #include "Common/Debug.h"
-#include "DescriptorHeap.h"
-#include "SwapChain.h"
 #include "DepthBuffer.h"
-
+#include "SwapChain.h"
 
 bool Renderer::Draw(const std::unique_ptr<Camera>& pCamera) {
 
