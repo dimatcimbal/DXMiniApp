@@ -52,7 +52,7 @@ bool Device::CreateRenderer(uint32_t Width,
 
     // DepthBuffer creation
     std::unique_ptr<DepthBuffer> pDepthBuffer =
-        std::make_unique<DepthBuffer>(*this, mDsvHeap, DSV_FORMAT);
+        std::make_unique<DepthBuffer>(*this, *mDsvHeap, DSV_FORMAT);
 
     // All good, create a Renderer now
     OutRenderer = std::make_unique<Renderer>(std::move(pContext), std::move(pSwapChain),
@@ -175,7 +175,7 @@ bool Device::CreateSwapChain(uint32_t Width,
         return false;
     }
 
-    OutSwapChain = std::make_unique<SwapChain>(*this, mRtvHeap, BufferCount, RTV_FORMAT,
+    OutSwapChain = std::make_unique<SwapChain>(*this, *mRtvHeap, BufferCount, RTV_FORMAT,
                                                std::move(OutDxgiSwapChain1));
 
     return true;

@@ -8,7 +8,6 @@
 
 class Camera;
 class CommandContext;
-
 class Resource;
 class SwapChain;
 
@@ -25,6 +24,7 @@ class Renderer {
     bool Draw(const std::unique_ptr<Camera>& pCamera);
 
   private:
+    // Owning resources.
     std::unique_ptr<CommandContext> mCommandContext;
     std::unique_ptr<SwapChain> mSwapChain;
     std::unique_ptr<DepthBuffer> mDepthBuffer;

@@ -64,6 +64,7 @@ class Device {
                          std::unique_ptr<CommandContext>& pCommandContext,
                          std::unique_ptr<SwapChain>& OutSwapChain);
 
+    // Owning resources.
     std::unique_ptr<DescriptorHeap> mRtvHeap;
     std::unique_ptr<DescriptorHeap> mDsvHeap;
 

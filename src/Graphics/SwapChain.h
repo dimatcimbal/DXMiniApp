@@ -15,12 +15,12 @@ class Device;
 
 class SwapChain {
   public:
-    SwapChain(Device& pDevice,
-              std::unique_ptr<DescriptorHeap>& pRtvHeap,
+    SwapChain(Device& Device,
+              DescriptorHeap& pRtvHeap,
               uint32_t SwapChainBufferCount,
               DXGI_FORMAT Format,
               ComPtr<IDXGISwapChain1>&& pSwapChain)
-        : mDevice(pDevice), mRtvHeap(pRtvHeap), mSwapChainBufferCount(SwapChainBufferCount),
+        : mDevice(Device), mRtvHeap(pRtvHeap), mSwapChainBufferCount(SwapChainBufferCount),
           mSwapChainBuffers{mSwapChainBufferCount}, mFormat(Format),
           mDxgiSwapChain1(std::move(pSwapChain)) {};
     ~SwapChain() = default;
@@ -30,7 +30,7 @@ class SwapChain {
   private:
     // Not owning resources.
     Device& mDevice;
-    std::unique_ptr<DescriptorHeap>& mRtvHeap;
+    DescriptorHeap& mRtvHeap;
 
     // Owning resources.
     uint32_t mSwapChainBufferCount;

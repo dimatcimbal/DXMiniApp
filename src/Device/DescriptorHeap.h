@@ -40,18 +40,18 @@ class DescriptorHeap {
 
 class HeapHandle : NonCopyable, StackAllocatable {
   public:
-    HeapHandle(std::unique_ptr<DescriptorHeap>& pDescriptorHeap)
-        : mDescriptorHeap(pDescriptorHeap),
-          mHeapHandle(pDescriptorHeap->GetCPUDescriptorHandleForHeapStart()) {};
+    HeapHandle(DescriptorHeap& DescriptorHeap)
+        : mDescriptorHeap(DescriptorHeap),
+          mHeapHandle(DescriptorHeap.GetCPUDescriptorHandleForHeapStart()) {};
     ~HeapHandle() = default;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE Next() {
         CD3DX12_CPU_DESCRIPTOR_HANDLE retHandle = mHeapHandle;
-        mHeapHandle.Offset(1, mDescriptorHeap->Size());
+        mHeapHandle.Offset(1, mDescriptorHeap.Size());
         return retHandle;
     }
 
   private:
-    std::unique_ptr<DescriptorHeap>& mDescriptorHeap;
     CD3DX12_CPU_DESCRIPTOR_HANDLE mHeapHandle;
+    DescriptorHeap& mDescriptorHeap;
 };

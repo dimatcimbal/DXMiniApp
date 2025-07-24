@@ -20,6 +20,6 @@ class Resource {
     }
 
   private:
-    ComPtr<ID3D12Resource> mResource;
     D3D12_CPU_DESCRIPTOR_HANDLE mDescriptorHandle;
+    ComPtr<ID3D12Resource> mResource;
 };

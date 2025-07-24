@@ -13,7 +13,7 @@ class Resource;
 
 class DepthBuffer {
   public:
-    DepthBuffer(Device& pDevice, std::unique_ptr<DescriptorHeap>& pDsvHeap, DXGI_FORMAT Format)
+    DepthBuffer(Device& pDevice, DescriptorHeap& pDsvHeap, DXGI_FORMAT Format)
         : mDevice(pDevice), mDsvHeap(pDsvHeap), mFormat(Format) {};
     ~DepthBuffer() = default;
 
@@ -22,10 +22,9 @@ class DepthBuffer {
   private:
     // Not owning resources.
     Device& mDevice;
-    std::unique_ptr<DescriptorHeap>& mDsvHeap;
+    DescriptorHeap& mDsvHeap;
 
     // Owning resources.
     std::unique_ptr<Resource> mResource;
-
     DXGI_FORMAT mFormat;
 };
