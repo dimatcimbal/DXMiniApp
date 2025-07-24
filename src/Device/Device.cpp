@@ -11,6 +11,8 @@
 #include "Graphics/DepthBuffer.h"
 #include "Graphics/Renderer.h"
 
+#include "CommandObjects/CommandQueue.h"
+
 bool Device::CreateRenderer(uint32_t Width,
                             uint32_t Height,
                             std::unique_ptr<Renderer>& OutRenderer) {
@@ -122,6 +124,15 @@ bool Device::CreateCommandObjects(D3D12_COMMAND_LIST_TYPE Type,
         return false;
     }
 
+    ComPtr<ID3D12Fence1> pD3D12Fence;
+    if FAILED (mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pD3D12Fence))) {
+        DEBUGPRINT(L"Failed to create Fence.\n");
+        return false;
+    }
+
+    auto pCommandQueue =
+        std::make_unique<CommandQueue>(Type, std::move(pD3D12Fence), std::move(pD3D12CommandQueue));
+
     ComPtr<ID3D12CommandAllocator> pD3D12CommandAllocator;
     if FAILED (mD3dDevice->CreateCommandAllocator(
                    Type, IID_PPV_ARGS(pD3D12CommandAllocator.GetAddressOf()))) {
@@ -136,7 +147,7 @@ bool Device::CreateCommandObjects(D3D12_COMMAND_LIST_TYPE Type,
         DEBUGPRINT(L"Failed to create CommandList.\n");
     }
 
-    OutContext = std::make_unique<CommandContext>(std::move(pD3D12CommandQueue),
+    OutContext = std::make_unique<CommandContext>(std::move(pCommandQueue),
                                                   std::move(pD3D12CommandAllocator),
                                                   std::move(pD3D12GraphicsCommandList));
 

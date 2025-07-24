@@ -28,7 +28,7 @@ bool Renderer::Draw(const std::unique_ptr<Camera>& pCamera) {
 
 bool Renderer::OnResize(uint32_t Width, uint32_t Height) {
 
-    // mCommandContext.WaitForIdle();
+    mCommandContext->WaitForIdle(); // FlushCommandQueue
 
     if (!mSwapChain->Resize(Width, Height)) {
         DEBUGPRINT(L"Failed to resize swap chain buffers.\n");
@@ -41,6 +41,20 @@ bool Renderer::OnResize(uint32_t Width, uint32_t Height) {
     }
 
     // mCommandContext.WaitForIdle();
+
+    // Update viewport
+    mScreenViewport.TopLeftX = 0;
+    mScreenViewport.TopLeftY = 0;
+    mScreenViewport.Width = static_cast<float>(Width);
+    mScreenViewport.Height = static_cast<float>(Height);
+    mScreenViewport.MinDepth = 0.0f;
+    mScreenViewport.MaxDepth = 1.0f;
+
+    // update scissor rect
+    mScissorRect.left = 0;
+    mScissorRect.top = 0;
+    mScissorRect.right = static_cast<LONG>(Width);
+    mScissorRect.bottom = static_cast<LONG>(Height);
 
     return false;
 }

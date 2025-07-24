@@ -2,9 +2,12 @@
 // Created by dtcimbal on 15/07/2025.
 
 #include "CommandCOntext.h"
+#include "CommandQueue.h"
 #include "Common/Debug.h"
 
 bool CommandContext::Reset() {
+
+    // Resetting the command allocator and command list
     if FAILED (mCommandAlloc->Reset()) {
         DEBUGPRINT(L"Failed to reset command allocator");
         return false;
