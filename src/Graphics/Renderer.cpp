@@ -19,9 +19,14 @@ bool Renderer::Draw(const std::unique_ptr<Camera>& pCamera) {
         return false;
     }
 
+
+
     // Draw call below
     context->SetViewportAndScissor(mScreenViewport, mScissorRect);
     // TODO Use the Box app example to complete this
+
+
+
 
     return true;
 }
@@ -40,7 +45,7 @@ bool Renderer::OnResize(uint32_t Width, uint32_t Height) {
         return false;
     }
 
-    // mCommandContext.WaitForIdle();
+    mCommandContext->WaitForIdle();
 
     // Update viewport
     mScreenViewport.TopLeftX = 0;

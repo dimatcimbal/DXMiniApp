@@ -13,7 +13,7 @@ bool CommandContext::Reset() {
         return false;
     }
 
-    if FAILED (mCommandList->Reset(mCommandAlloc.Get(), nullptr)) {
+    if FAILED (mCommandList->Reset(mCommandAlloc.Get(), mPSO.Get())) {
         DEBUGPRINT(L"Failed to reset command list");
         return false;
     }

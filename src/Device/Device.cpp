@@ -147,9 +147,43 @@ bool Device::CreateCommandObjects(D3D12_COMMAND_LIST_TYPE Type,
         DEBUGPRINT(L"Failed to create CommandList.\n");
     }
 
+
+    // Create a Pipeline State Object (PSO) for the command list
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+    psoDesc.pRootSignature = mRootSignature.Get();
+    psoDesc.VS =
+    {
+        reinterpret_cast<BYTE*>(mvsByteCode->GetBufferPointer()),
+        mvsByteCode->GetBufferSize()
+    };
+    psoDesc.PS =
+    {
+        reinterpret_cast<BYTE*>(mpsByteCode->GetBufferPointer()),
+        mpsByteCode->GetBufferSize()
+    };
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = mBackBufferFormat;
+    psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
+    psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+    psoDesc.DSVFormat = mDepthStencilFormat;
+
+    ComPtr<ID3D12PipelineState> pD3D123PSO;
+    if FAILED(mD3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(pD3D123PSO.GetAddressOf()))) {
+        DEBUGPRINT(L"Failed to create Graphics Pipeline State Object (PSO).\n");
+        return false;
+    }
+
     OutContext = std::make_unique<CommandContext>(std::move(pCommandQueue),
                                                   std::move(pD3D12CommandAllocator),
-                                                  std::move(pD3D12GraphicsCommandList));
+                                                  std::move(pD3D12GraphicsCommandList),
+                                                  std::move(pD3D123PSO));
 
     return true;
 }

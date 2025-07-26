@@ -35,4 +35,8 @@ class CommandContext {
     std::unique_ptr<CommandQueue> mCommandQueue;
     ComPtr<ID3D12CommandAllocator> mCommandAlloc;
     ComPtr<ID3D12GraphicsCommandList> mCommandList;
+
+    // Not owning resources.
+    ComPtr<ID3D12RootSignature> mRootSignature;
+    ComPtr<ID3D12PipelineState> mPSO;
 };
