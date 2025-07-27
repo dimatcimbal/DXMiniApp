@@ -1,13 +1,15 @@
 ﻿// src/Window/FileView.cpp
+// Created by dtcimbal on 26/05/2025.
 #include "FileView.h"
 #include <commctrl.h> // Required for ListView functions (e.g., ListView_InsertItem)
 #include <filesystem>
-#include "Util/WorkingDirFileProvider.h"
+#include "Common/Debug.h"
+#include "Files/WorkingDirFileProvider.h"
 
 // Link with Comctl32.lib for common controls
 #pragma comment(lib, "Comctl32.lib")
 
-FileView::FileView(Util::BaseFileProvider& fileProvider) : m_fileProvider(fileProvider) {
+FileView::FileView(BaseFileProvider& fileProvider) : mFileProvider(fileProvider) {
 }
 
 FileView::~FileView() = default;
@@ -22,20 +24,19 @@ bool FileView::OnCreate(HWND hParent, UINT id) {
     icex.dwICC = ICC_TREEVIEW_CLASSES; // Corrected: Removed the negation
     InitCommonControlsEx(&icex);
 
-    m_hWnd =
-        CreateWindowEx(WS_EX_CLIENTEDGE, // Extended style for a sunken border
-                       WC_TREEVIEW, // Tree View control class name (from commctrl.h) - Corrected
-                                    // comment: It's a TreeView, not ListView here.
-                       nullptr,     // Window text (none for a list view)
-                       WS_CHILD | WS_VISIBLE | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
-                           TVS_SHOWSELALWAYS, // TreeView styles for file view
-                       0, 0, 0, 0,            // Initial position and size will be set by parent
-                       hParent,               // Parent window
-                       (HMENU)(INT_PTR)id,    // Child window ID
-                       GetModuleHandle(nullptr), nullptr);
+    mHWnd = CreateWindowEx(WS_EX_CLIENTEDGE, // Extended style for a sunken border
+                           WC_TREEVIEW,      // Tree View control class name (from commctrl.h) -
+                                        // Corrected comment: It's a TreeView, not ListView here.
+                           nullptr, // Window text (none for a list view)
+                           WS_CHILD | WS_VISIBLE | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+                               TVS_SHOWSELALWAYS, // TreeView styles for file view
+                           0, 0, 0, 0,            // Initial position and size will be set by parent
+                           hParent,               // Parent window
+                           (HMENU)(INT_PTR)id,    // Child window ID
+                           GetModuleHandle(nullptr), nullptr);
 
-    if (m_hWnd == nullptr) {
-        OutputDebugString(L"Failed to create FileView TreeView.\n"); // Corrected message
+    if (mHWnd == nullptr) {
+        DEBUGPRINT(L"Failed to create FileView TreeView.\n");
         return false;
     }
 
@@ -47,11 +48,11 @@ bool FileView::OnCreate(HWND hParent, UINT id) {
 // Populates the file view control with the files within the same dir.
 void FileView::PopulateFileView() {
     // Clear any existing items in the tree view before populating
-    TreeView_DeleteAllItems(m_hWnd);
+    TreeView_DeleteAllItems(mHWnd);
 
     try {
         // Get the current directory as a FileEntry directly from the file provider
-        Util::FileEntry rootEntry = m_fileProvider.getCurrentDirectory();
+        FileEntry rootEntry = mFileProvider.getCurrentDirectory();
         std::wstring rootDisplayName = rootEntry.name;
 
         // Structure to insert the root item (current folder)
@@ -65,7 +66,7 @@ void FileView::PopulateFileView() {
         tvInsert.item = tvItem;           // Assign the TVITEMW structure
 
         // Insert the root item and get its handle
-        HTREEITEM hRoot = TreeView_InsertItem(m_hWnd, &tvInsert);
+        HTREEITEM hRoot = TreeView_InsertItem(mHWnd, &tvInsert);
 
         if (hRoot == nullptr) {
             MessageBoxW(nullptr, L"Failed to insert root item into TreeView.", L"Error",
@@ -74,7 +75,7 @@ void FileView::PopulateFileView() {
         }
 
         // Iterate through the directory to add files as children of the root node
-        for (const auto& entry : m_fileProvider) {
+        for (const auto& entry : mFileProvider) {
             // Structure to insert a child item (file)
             TVITEMW tvChildItem{}; // Explicitly use TVITEMW for wide characters
             tvChildItem.mask = TVIF_TEXT;
@@ -87,15 +88,15 @@ void FileView::PopulateFileView() {
             tvChildInsert.item = tvChildItem;      // Assign the TVITEMW structure
 
             // Insert the file item
-            TreeView_InsertItem(m_hWnd, &tvChildInsert);
+            TreeView_InsertItem(mHWnd, &tvChildInsert);
         }
 
         // Explicitly expand the root node using SendMessage
         // This is often more reliable than just TreeView_Expand macro
-        SendMessage(m_hWnd, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
+        SendMessage(mHWnd, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot);
 
         // Force a redraw of the TreeView to ensure expansion is visible immediately
-        UpdateWindow(m_hWnd);
+        UpdateWindow(mHWnd);
 
     } catch (const std::filesystem::filesystem_error& e) {
         std::wstring errorMsg = L"Filesystem error: ";

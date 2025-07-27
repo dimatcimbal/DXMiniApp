@@ -1,12 +1,13 @@
 ﻿// src/Window/FileView.h
+// Created by dtcimbal on 26/05/2025.
 #pragma once
 
 #include "BaseView.h"
-#include "Util/BaseFileProvider.h"
+#include "Files/BaseFileProvider.h"
 
 class FileView : public BaseView {
   public:
-    FileView(Util::BaseFileProvider& fileProvider);
+    FileView(BaseFileProvider& fileProvider);
     ~FileView() override;
 
     // Overrides BaseView::Create to create the ListView control.
@@ -16,5 +17,5 @@ class FileView : public BaseView {
     void PopulateFileView();
 
   private:
-    Util::BaseFileProvider& m_fileProvider;
+    BaseFileProvider& mFileProvider;
 };

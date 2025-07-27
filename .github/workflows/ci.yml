@@ -17,11 +17,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Fetch all history for proper formatting checks
+        submodules: true
 
     - name: Find clang-format and run check
       run: .\housekeeper.ps1 -CheckFormat
-      shell: pwsh # Use PowerShell Core for the script
+      shell: pwsh 
       
   build:
     name: Build Project
@@ -31,16 +31,24 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: true
 
-    - name: Set up MSVC environment
+    - name: Set up MSVC environment with Vcpkg and Python
       # This action sets up MSVC, CMake, Ninja, and other necessary tools.
-      # It's essential for a Windows build environment.
       uses: ilammy/msvc-dev-cmd@v1.13.0
+      with:
+        arch: x64 
+
+    - name: Install Vcpkg Dependencies
+      # This step calls housekeeper script to handle vcpkg setup and dependency installation.
+      run: .\housekeeper.ps1 -Deps
+      shell: pwsh 
 
     - name: Build Project (Release)
       run: .\housekeeper.ps1 -Build -Config Release
-      shell: pwsh # Specify PowerShell Core for the script
+      shell: pwsh 
 
     - name: Build Project (Debug)
       run: .\housekeeper.ps1 -Build -Config Debug
-      shell: pwsh # Specify PowerShell Core for the script
+      shell: pwsh 
