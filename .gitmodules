@@ -1,0 +1,3 @@
+[submodule "Housekeeper"]
+	path = Housekeeper
+	url = https://github.com/dimatcimbal/Housekeeper.git
