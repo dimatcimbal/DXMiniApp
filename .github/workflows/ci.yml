@@ -34,16 +34,51 @@ jobs:
       with:
         submodules: true
 
-    - name: Set up MSVC environment with Vcpkg and Python
-      # This action sets up MSVC, CMake, Ninja, and other necessary tools.
-      uses: ilammy/msvc-dev-cmd@v1.13.0
+    # - name: Set up MSVC environment with Vcpkg and Python
+    #  # This action sets up MSVC, CMake, Ninja, and other necessary tools.
+    #  uses: ilammy/msvc-dev-cmd@v1.13.0
+    #  with:
+    #    arch: x64
+
+    - name: Add MSBuild and Developer Command Prompt to PATH
+      # This action sets up the Visual Studio environment, including MSVC compiler and clang-format if installed with VS
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Define Vcpkg Paths
+      id: vcpkg_paths
+      shell: pwsh
+      run: |
+        $VCPKG_ROOT_PATH = Join-Path -Path "${{ github.workspace }}" -ChildPath "vcpkg"
+        $VCPKG_TOOLCHAIN_FILE_PATH = Join-Path -Path "${{ github.workspace }}" -ChildPath "vcpkg\scripts\buildsystems\vcpkg.cmake"
+        
+        # Output these as step outputs to be used by subsequent steps
+        echo "vcpkg_root_path=$VCPKG_ROOT_PATH" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        echo "vcpkg_toolchain_file_path=$VCPKG_TOOLCHAIN_FILE_PATH" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Setup Vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git ${{ steps.vcpkg_paths.outputs.vcpkg_root_path }}
+        # Execute the bootstrap script directly using its full path,
+        # and explicitly use cmd.exe to ensure proper batch file execution.
+        cmd.exe /c "${{ steps.vcpkg_paths.outputs.vcpkg_root_path }}\bootstrap-vcpkg.bat"
+      shell: pwsh
+
+    - name: Add Vcpkg to Environment Variables
+      run: |
+        echo "VCPKG_ROOT=${{ steps.vcpkg_paths.outputs.vcpkg_root_path }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+        echo "CMAKE_TOOLCHAIN_FILE=${{ steps.vcpkg_paths.outputs.vcpkg_toolchain_file_path }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+      shell: pwsh
+
+    - name: Restore Vcpkg Cache
+      uses: actions/cache@v4
       with:
-        arch: x64 
+        path: ${{ steps.vcpkg_paths.outputs.vcpkg_root_path }}\installed # Cache the installed packages
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }} # Cache key based on vcpkg.json
 
     - name: Install Vcpkg Dependencies
       # This step calls housekeeper script to handle vcpkg setup and dependency installation.
       run: .\housekeeper.ps1 -Deps
-      shell: pwsh 
+      shell: pwsh
 
     - name: Build Project (Release)
       run: .\housekeeper.ps1 -Build -Config Release
