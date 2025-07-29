@@ -1,0 +1,44 @@
+﻿# .github/actions/action.yml
+name: 'Vcpkg Setup'
+description: 'Sets up Vcpkg and adds it to environment variables, then restores cache.'
+
+outputs:
+  vcpkg_root:
+    description: 'The root directory of Vcpkg.'
+    value: ${{ steps.vcpkg_setup.outputs.vcpkg_root }}
+  cmake_toolchain_file:
+    description: 'The path to the Vcpkg CMake toolchain file.'
+    value: ${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Vcpkg
+      id: vcpkg_setup
+      shell: pwsh
+      run: |
+        $VCPKG_ROOT = Join-Path -Path "${{ github.workspace }}" -ChildPath "vcpkg"
+        $CMAKE_TOOLCHAIN_FILE = Join-Path -Path "$VCPKG_ROOT" -ChildPath "scripts\buildsystems\vcpkg.cmake"
+  
+        git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth 1
+        # Execute the bootstrap script directly using its full path,
+        # and explicitly use cmd.exe to ensure proper batch file execution.
+        cmd.exe /c "$VCPKG_ROOT\bootstrap-vcpkg.bat" 
+
+        # Verify Vcpkg Toolchain File Exists
+        if (-not (Test-Path $CMAKE_TOOLCHAIN_FILE)) {
+          Write-Error "ERROR: Vcpkg toolchain file NOT found. This is critical for CMake integration."
+          exit 1
+        }
+
+        Write-Host "Vcpkg setup completed successfully."
+        
+        # Add Vcpkg to the outputs
+        echo "vcpkg_root=$VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        echo "cmake_toolchain_file=$CMAKE_TOOLCHAIN_FILE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Print the outputs
+      run: |
+        Write-Host "vcpkg_root=${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
+        Write-Host "cmake_toolchain_file=${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
+      shell: pwsh
