@@ -20,7 +20,10 @@ runs:
         $VCPKG_ROOT = Join-Path -Path "${{ github.workspace }}" -ChildPath "vcpkg"
         $CMAKE_TOOLCHAIN_FILE = Join-Path -Path "$VCPKG_ROOT" -ChildPath "scripts\buildsystems\vcpkg.cmake"
   
-        git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth 1
+        git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+        # Get the bazeline commit, see vcpkg.json for details
+        git checkout 4f8fe05871555c1798dbcb1957d0d595e94f7b57
+        
         # Execute the bootstrap script directly using its full path,
         # and explicitly use cmd.exe to ensure proper batch file execution.
         cmd.exe /c "$VCPKG_ROOT\bootstrap-vcpkg.bat" 
