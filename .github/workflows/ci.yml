@@ -32,7 +32,7 @@ jobs:
         Write-Host "Env CMAKE_TOOLCHAIN_FILE='$($env:CMAKE_TOOLCHAIN_FILE)'"
     
         .\Housekeeper\housekeeper.ps1 -CheckFormat
-      shell: pwsh 
+      shell: pwsh
       
   build:
     name: Build Project
@@ -65,6 +65,10 @@ jobs:
       run:  |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
         $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
+        
+        Write-Host "Vcpkg Toolchain File"
+        Get-Item -Path $env:CMAKE_TOOLCHAIN_FILE | Format-List
+        
         .\Housekeeper\housekeeper.ps1 -Build -Config Release
       shell: pwsh 
 

@@ -35,7 +35,7 @@ runs:
         }
 
         Write-Host "Vcpkg setup completed successfully."
-        
+
         # Add Vcpkg to the outputs
         echo "vcpkg_root=$VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         echo "cmake_toolchain_file=$CMAKE_TOOLCHAIN_FILE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
