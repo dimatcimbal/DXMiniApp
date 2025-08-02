@@ -61,23 +61,17 @@ jobs:
         .\Housekeeper\housekeeper.ps1 -Deps
       shell: pwsh
 
+    - name: Build Project (Debug)
+      run:  |
+        $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
+        $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"  
+        .\Housekeeper\housekeeper.ps1 -Build -Debug -Config Debug
+      shell: pwsh
+
     - name: Build Project (Release)
       run:  |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
         $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
-        
-        Write-Host "Vcpkg Toolchain File"
-        Get-Item -Path $env:CMAKE_TOOLCHAIN_FILE | Format-List
-        
-        
-        $VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
-        $CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
         .\Housekeeper\housekeeper.ps1 -Build -Config Release
       shell: pwsh 
 
-    - name: Build Project (Debug)
-      run:  |
-        $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
-        $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
-        .\Housekeeper\housekeeper.ps1 -Build -Config Debug
-      shell: pwsh 
