@@ -12,49 +12,40 @@ jobs:
   format_check:
     name: Check Code Formatting
     runs-on: windows-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: true
-
+    
     - name: Vcpkg Setup
       id: vcpkg_setup
       uses: ./.github/actions/vcpkg-setup/
-
+      
     - name: Find clang-format and run check
       run: |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
         $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
-        
-        Write-Host "Env VCPKG_ROOT='$($env:VCPKG_ROOT)'"
-        Write-Host "Env CMAKE_TOOLCHAIN_FILE='$($env:CMAKE_TOOLCHAIN_FILE)'"
-    
         .\Housekeeper\housekeeper.ps1 -CheckFormat
       shell: pwsh
       
   build:
     name: Build Project
     runs-on: windows-latest
-    needs: format_check
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: true
-
-    - name: Add MSBuild and Developer Command Prompt to PATH
-      # This action sets up the Visual Studio environment, including MSVC compiler and clang-format if installed with VS
-      uses: microsoft/setup-msbuild@v1.1
-
+    
     - name: Vcpkg Setup
       id: vcpkg_setup
       uses: ./.github/actions/vcpkg-setup/
+      
+    - name: Add MSBuild and Developer Command Prompt to PATH
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Install Vcpkg Dependencies
-      # This step calls the housekeeper script to handle vcpkg setup and dependency installation.
       run: |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
         $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
@@ -62,16 +53,15 @@ jobs:
       shell: pwsh
 
     - name: Build Project (Debug)
-      run:  |
+      run: |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
-        $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"  
+        $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
         .\Housekeeper\housekeeper.ps1 -Build -Config Debug
       shell: pwsh
 
     - name: Build Project (Release)
-      run:  |
+      run: |
         $env:VCPKG_ROOT = "${{ steps.vcpkg_setup.outputs.vcpkg_root }}"
         $env:CMAKE_TOOLCHAIN_FILE = "${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}"
         .\Housekeeper\housekeeper.ps1 -Build -Config Release
-      shell: pwsh 
-
+      shell: pwsh
