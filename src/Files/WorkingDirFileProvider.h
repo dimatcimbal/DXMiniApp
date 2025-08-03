@@ -1,4 +1,4 @@
-﻿// src/Util/BaseFileProvider.h
+﻿// src/Files/WorkingDirFileProvider.h
 // Created by dtcimbal on 2/06/2025.
 #pragma once
 

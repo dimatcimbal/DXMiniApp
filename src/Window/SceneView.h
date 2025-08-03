@@ -6,9 +6,7 @@
 
 #include <memory>
 
-#include "Graphics//Device.h"
-
-using std::unique_ptr;
+#include "Graphics/Device.h"
 
 // Define a unique class name for the SceneView window
 const static LPCWSTR SCENE_VIEW_CLASS_NAME = L"DXMiniAppSceneView";

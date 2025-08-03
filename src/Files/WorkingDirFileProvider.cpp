@@ -1,12 +1,10 @@
-﻿// src/Util/WorkingDirFileProvider.cpp
+﻿// src/Files/WorkingDirFileProvider.cpp
 // Created by dtcimbal on 2/06/2025.
 #include "WorkingDirFileProvider.h"
 #include <windows.h>
 #include <filesystem>
 
 #include "Common/Debug.h"
-
-// --- WorkingDirFileProvider Implementation ---
 
 FileIterator WorkingDirFileProvider::begin() {
     try {
