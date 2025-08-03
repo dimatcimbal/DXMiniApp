@@ -6,7 +6,9 @@
 
 #include <memory>
 
-#include "Graphics/Device.h"
+class Camera;
+class Device;
+class Renderer;
 
 // Define a unique class name for the SceneView window
 const static LPCWSTR SCENE_VIEW_CLASS_NAME = L"DXMiniAppSceneView";

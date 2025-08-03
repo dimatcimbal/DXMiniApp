@@ -2,12 +2,12 @@
 // Created by dtcimbal on 26/05/2025.
 #include "SceneView.h"
 #include <sstream> // For std::wostringstream
-#include <stdexcept>
 #include <string> // For std::to_wstring
 
 #include "Common/Debug.h" // For DEBUGPRINT
 #include "Graphics/Device.h"
 #include "Graphics/Renderer.h"
+#include "Scene/Camera.h"
 
 SceneView::SceneView() = default;
 
