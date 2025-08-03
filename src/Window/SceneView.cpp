@@ -55,8 +55,8 @@ LRESULT CALLBACK SceneView::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam
 LRESULT SceneView::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_SIZE: {
-        int width = LOWORD(lParam);  // int width = (UINT)(UINT64)lParam & 0xFFFF;
-        int height = HIWORD(lParam); // int height = (UINT)(UINT64)lParam >> 16;
+        int width = LOWORD(lParam);
+        int height = HIWORD(lParam);
         OnResize(width, height);
         return 0; // Message handled
     }

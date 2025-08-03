@@ -92,7 +92,7 @@ bool MainWindow::CreateMainWindow() {
     );
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT((L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError())).c_str());
+        DEBUGPRINT(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
