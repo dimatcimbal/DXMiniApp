@@ -5,16 +5,24 @@ description: 'Sets up Vcpkg and adds it to environment variables, then restores 
 outputs:
   vcpkg_root:
     description: 'The root directory of Vcpkg.'
-    value: ${{ steps.vcpkg_setup.outputs.vcpkg_root }}
+    value: ${{ steps.vcpkg_outputs.outputs.vcpkg_root }}
   cmake_toolchain_file:
     description: 'The path to the Vcpkg CMake toolchain file.'
-    value: ${{ steps.vcpkg_setup.outputs.cmake_toolchain_file }}
+    value: ${{ steps.vcpkg_outputs.outputs.cmake_toolchain_file }}
 
 runs:
   using: "composite"
   steps:
-    # This step checks for a cached Vcpkg installation.
-    # The key uses the runner's OS and the vcpkg commit SHA for a unique cache.
+    # This step sets the VCPKG_ROOT and CMAKE_TOOLCHAIN_FILE environment variables
+    # for all subsequent steps to use.
+    - name: Set Vcpkg Paths
+      id: set-paths
+      shell: bash
+      run: |
+        echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" >> $GITHUB_ENV
+        echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+    # This step checks for a cached Vcpkg installation using the new env variable.
     - name: Cache Vcpkg
       id: cache-vcpkg
       uses: actions/cache@v4
@@ -28,22 +36,19 @@ runs:
       shell: pwsh
       if: steps.cache-vcpkg.outputs.cache-hit != 'true'
       run: |
-        $VCPKG_ROOT = Join-Path -Path "${{ github.workspace }}" -ChildPath "vcpkg"
-        $CMAKE_TOOLCHAIN_FILE = Join-Path -Path "$VCPKG_ROOT" -ChildPath "scripts\buildsystems\vcpkg.cmake"
-  
-        git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+        git clone https://github.com/microsoft/vcpkg.git "$env:VCPKG_ROOT"
         
-        # Get the bazeline commit, see vcpkg.json for details
-        Push-Location "$VCPKG_ROOT"
+        Push-Location "$env:VCPKG_ROOT"
         git checkout 4f8fe05871555c1798dbcb1957d0d595e94f7b57
         Pop-Location
         
-        # Execute the bootstrap script directly using its full path,
-        # and explicitly use cmd.exe to ensure proper batch file execution.
-        cmd.exe /c "$VCPKG_ROOT\bootstrap-vcpkg.bat" 
+        cmd.exe /c "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" 
 
         Write-Host "Vcpkg setup completed successfully."
 
-        # Add Vcpkg to the action outputs
-        echo "vcpkg_root=$VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        echo "cmake_toolchain_file=$CMAKE_TOOLCHAIN_FILE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    - name: Vcpkg Outputs
+      id: vcpkg_outputs
+      shell: pwsh
+      run: |
+        echo "vcpkg_root=$env:VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        echo "cmake_toolchain_file=$env:CMAKE_TOOLCHAIN_FILE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
