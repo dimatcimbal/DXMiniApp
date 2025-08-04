@@ -1,0 +1,54 @@
+﻿# .github/actions/vcpkg-setup/action.yml
+name: 'Vcpkg Setup'
+description: 'Sets up Vcpkg and adds it to environment variables, then restores cache.'
+
+outputs:
+  vcpkg_root:
+    description: 'The root directory of Vcpkg.'
+    value: ${{ steps.vcpkg_outputs.outputs.vcpkg_root }}
+  cmake_toolchain_file:
+    description: 'The path to the Vcpkg CMake toolchain file.'
+    value: ${{ steps.vcpkg_outputs.outputs.cmake_toolchain_file }}
+
+runs:
+  using: "composite"
+  steps:
+    # This step sets the VCPKG_ROOT and CMAKE_TOOLCHAIN_FILE environment variables
+    # for all subsequent steps to use.
+    - name: Set Vcpkg Paths
+      id: set-paths
+      shell: bash
+      run: |
+        echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" >> $GITHUB_ENV
+        echo "CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
+    # This step checks for a cached Vcpkg installation using the new env variable.
+    - name: Cache Vcpkg
+      id: cache-vcpkg
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/vcpkg
+        key: ${{ runner.os }}-vcpkg-4f8fe05871555c1798dbcb1957d0d595e94f7b57
+
+    # This step only runs if the cache was a miss.
+    - name: Setup Vcpkg
+      id: vcpkg_setup
+      shell: pwsh
+      if: steps.cache-vcpkg.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git "$env:VCPKG_ROOT"
+        
+        Push-Location "$env:VCPKG_ROOT"
+        git checkout 4f8fe05871555c1798dbcb1957d0d595e94f7b57
+        Pop-Location
+        
+        cmd.exe /c "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" 
+
+        Write-Host "Vcpkg setup completed successfully."
+
+    - name: Vcpkg Outputs
+      id: vcpkg_outputs
+      shell: pwsh
+      run: |
+        echo "vcpkg_root=$env:VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        echo "cmake_toolchain_file=$env:CMAKE_TOOLCHAIN_FILE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append

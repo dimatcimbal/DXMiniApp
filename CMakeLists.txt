@@ -24,6 +24,10 @@ set(BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
 file(GLOB_RECURSE SOURCES "${SRC_DIR}/*.cpp")
 file(GLOB_RECURSE HEADERS "${INC_DIR}/*.h" "${INC_DIR}/*.hpp")
 
+# VCPKG dependencies
+find_package(directx-headers CONFIG REQUIRED)
+find_path(D3DX12_INCLUDE_DIR "d3dx12.h")
+
 # Create a Windows application (not console)
 add_executable(DXMiniApp WIN32 ${SOURCES} ${HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/app.rc)
 
@@ -32,19 +36,25 @@ add_executable(DXMiniApp WIN32 ${SOURCES} ${HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}
 target_compile_definitions(DXMiniApp PRIVATE UNICODE _UNICODE)
 
 # Include directories
-target_include_directories(DXMiniApp PRIVATE ${INC_DIR} ${SRC_DIR})
+target_include_directories(DXMiniApp PRIVATE
+    ${INC_DIR}
+    ${SRC_DIR}
+    ${D3DX12_INCLUDE_DIR}
+)
 
 # Link required Windows libraries
 target_link_libraries(DXMiniApp
-    user32      # User interface functions
-    gdi32       # Graphics device interface
-    kernel32    # Core Windows functions
-    gdiplus     # GDI+ for anti-aliasing fonts
-    comctl32    # Common Controls (TreeView, ListBox, InitCommonControlsEx)
-    shlwapi     # Shell Light-weight Utility library (PathCombine, PathFindFileName)
-    # strsafe.h functions are generally inline or part of kernel32, no explicit lib needed.
-    d3d12       # Direct3D 12 API
-    dxgi        # DirectX Graphics Infrastructure
+    PRIVATE
+        user32      # User interface functions
+        gdi32       # Graphics device interface
+        kernel32    # Core Windows functions
+        gdiplus     # GDI+ for anti-aliasing fonts
+        comctl32    # Common Controls (TreeView, ListBox, InitCommonControlsEx)
+        shlwapi     # Shell Light-weight Utility library (PathCombine, PathFindFileName)
+        d3d12       # Direct3D 12 API
+        dxgi        # DirectX Graphics Infrastructure
+        dxguid      # DirectX GUID definitions
+        Microsoft::DirectX-Headers # VCPKG's include directories for directx-headers
 )
 
 # Set subsystem to Windows (removes console window)

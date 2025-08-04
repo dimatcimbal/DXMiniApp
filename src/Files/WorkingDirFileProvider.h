@@ -1,9 +1,9 @@
-﻿#pragma once
+﻿// src/Files/WorkingDirFileProvider.h
+// Created by dtcimbal on 2/06/2025.
+#pragma once
 
 #include <filesystem>
 #include "BaseFileProvider.h"
-
-namespace Util {
 
 // Provides access to files within the current working directory, supporting range-based for loops.
 class WorkingDirFileProvider : public BaseFileProvider {
@@ -17,5 +17,3 @@ class WorkingDirFileProvider : public BaseFileProvider {
     FileIterator end() override;
     FileEntry getCurrentDirectory() const override;
 };
-
-} // namespace Util

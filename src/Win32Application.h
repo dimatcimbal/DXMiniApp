@@ -1,4 +1,5 @@
 ﻿// src/Win32Application.h
+// Created by dtcimbal on 2/06/2025.
 #pragma once
 
 #include <memory> // for std::unique_ptr
@@ -14,5 +15,5 @@ class Win32Application {
     int Run() const;
 
   private:
-    std::unique_ptr<MainWindow> m_pMainWindow; // Use unique_ptr for ownership
+    std::unique_ptr<MainWindow> mMainWindow; // Use unique_ptr for ownership
 };

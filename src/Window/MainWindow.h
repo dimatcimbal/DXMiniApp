@@ -1,11 +1,13 @@
 ﻿// src/Window/MainWindow.h
+// Created by dtcimbal on 2/06/2025.
 #pragma once
 
 #include <Windows.h>
 #include <memory> // For std::unique_ptr
 #include <string> // For std::wstring
 
-#include "Util/BaseFileProvider.h"
+#include "Files/BaseFileProvider.h"
+#include "Scene/Camera.h"
 
 // Forward declarations for view component classes
 // This is a good practice to avoid circular dependencies and speed up compilation.
@@ -39,37 +41,41 @@ class MainWindow {
 
     // Accessor for the main window handle
     HWND GetHWND() const {
-        return m_hWnd;
+        return mHWnd;
     }
 
     // --- Public members for SplitterProc access (declared public due to friend, could be private
     // with accessors) --- Last known mouse X position during a splitter drag operation
-    int m_lastMouseX;
+    int mLastMouseX;
     // Tracks which splitter is being dragged (0: none, 1: splitter1, 2: splitter2)
-    int m_draggingSplitter;
+    int mDraggingSplitter;
     // Handles for the splitter bar windows
-    HWND m_hwndSplitter1;
-    HWND m_hwndSplitter2;
+    HWND mHwndSplitter1;
+    HWND mHwndSplitter2;
     // Proportions of the three main panes (FileView, SceneView, SceneTree)
     // Normalized so their sum is typically 1.0f.
-    float m_paneProportions[3];
+    float mPaneProportions[3];
 
     // --- Public helper methods (exposed for friend or if other parts of the app need to trigger
     // layout) --- Recalculates and sets the positions of all child views based on current window
     // size and pane proportions.
     void LayoutChildViews(int clientWidth, int clientHeight);
+    int Run();
 
   private:
+    // Internal application update call
+    bool OnUpdate();
+
     // Main application window handle
-    HWND m_hWnd;
+    HWND mHWnd;
     // Instance handle for the application, obtained during creation.
-    HINSTANCE m_hInstance;
+    HINSTANCE mHInstance;
 
     // Smart pointers to manage the lifetime of our view components.
-    std::unique_ptr<FileView> m_pFileView;
-    std::unique_ptr<SceneTree> m_pSceneTree;
-    std::unique_ptr<SceneView> m_pSceneView;
-    std::unique_ptr<Util::BaseFileProvider> m_fileProvider;
+    std::unique_ptr<FileView> mFileView;
+    std::unique_ptr<SceneTree> mSceneTree;
+    std::unique_ptr<SceneView> mSceneView;
+    std::unique_ptr<BaseFileProvider> mFileProvider;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the main application window.
