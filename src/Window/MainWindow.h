@@ -2,9 +2,9 @@
 // Created by dtcimbal on 2/06/2025.
 #pragma once
 
-#include <Windows.h>
 #include <memory> // For std::unique_ptr
 #include <string> // For std::wstring
+#include "Includes/WinInclude.h"
 
 #include "Files/BaseFileProvider.h"
 #include "Scene/Camera.h"

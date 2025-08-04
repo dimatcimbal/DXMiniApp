@@ -1,7 +1,7 @@
 ﻿// src/Win32Application.cpp
 // Created by dtcimbal on 2/06/2025.
 #include "Win32Application.h"
-#include <Windows.h> // Required for MSG, GetMessage, TranslateMessage, DispatchMessage
+#include "Includes/WinInclude.h" // Required for MSG, GetMessage, TranslateMessage, DispatchMessage
 #include <memory>    // for std::unique_ptr and std::make_unique
 
 Win32Application::Win32Application() {

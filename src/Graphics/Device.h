@@ -1,7 +1,7 @@
 ﻿//
 // Created by dtcimbal on 27/07/2025.
 #pragma once
-#include <Windows.h>
+#include "Includes/WinInclude.h" // for HWND
 #include <memory>
 
 #include "Renderer.h"
