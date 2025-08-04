@@ -9,6 +9,6 @@
 #define DEBUGPRINT(msg, ...)                                                                       \
     do {                                                                                           \
         wchar_t buffer[256];                                                                       \
-        swprintf_s(buffer, _countof(buffer), msg, __VA_ARGS__);                                    \
+        swprintf_s(buffer, _countof(buffer), msg, ##__VA_ARGS__);                                  \
         OutputDebugString(buffer);                                                                 \
     } while (0)
