@@ -2,7 +2,7 @@
 // Created by dtcimbal on 26/05/2025.
 #include "SceneView.h"
 #include <sstream> // For std::wostringstream
-#include <string> // For std::to_wstring
+#include <string>  // For std::to_wstring
 
 #include "Common/Debug.h" // For DEBUGPRINT
 #include "Graphics/Device.h"
