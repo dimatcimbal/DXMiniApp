@@ -12,7 +12,7 @@ FileIterator WorkingDirFileProvider::begin() {
         return FileIterator(std::filesystem::directory_iterator(mDirectoryPath));
     } catch (const std::filesystem::filesystem_error& e) {
         // Handle cases where directory cannot be opened (e.g., permissions)
-        DEBUGPRINT(L"Filesystem error in WorkingDirFileProvider::begin: %s.\n",
+        DEBUG_ERROR(L"Filesystem error in WorkingDirFileProvider::begin: %s.\n",
                    std::filesystem::path(e.what()).wstring().c_str());
         // Return an end sentinel
         return FileIterator();

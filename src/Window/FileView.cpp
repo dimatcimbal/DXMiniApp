@@ -36,7 +36,7 @@ bool FileView::OnCreate(HWND hParent, UINT id) {
                            GetModuleHandle(nullptr), nullptr);
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT(L"Failed to create FileView TreeView.\n");
+        DEBUG_ERROR(L"Failed to create FileView TreeView.\n");
         return false;
     }
 

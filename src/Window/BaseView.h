@@ -2,7 +2,7 @@
 // Created by dtcimbal on 2/06/2025.
 #pragma once
 
-#include "Includes/WinInclude.h"
+#include "Includes/WindowsInclude.h"
 
 // A base class for all UI view components.
 // It manages the HWND for the specific view.

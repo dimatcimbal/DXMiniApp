@@ -20,12 +20,11 @@ class SceneView : public BaseView {
 
     // Overrides BaseView::Create to create a custom window for the scene.
     bool OnCreate(HWND hParent, UINT id) override;
-    void OnResize(int Width, int Height);
-    void OnUpdate();
+    void OnResize(int Width, int Height) const;
+    void OnUpdate() const;
 
   private:
     std::unique_ptr<Device> mDevice;
-    std::unique_ptr<Renderer> mRenderer;
     std::unique_ptr<Camera> mCamera;
 
     // --- Private helper methods for window management ---

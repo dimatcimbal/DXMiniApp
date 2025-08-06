@@ -6,7 +6,6 @@
 
 #include "Common/Debug.h" // For DEBUGPRINT
 #include "Graphics/Device.h"
-#include "Graphics/Renderer.h"
 #include "Scene/Camera.h"
 
 SceneView::SceneView() = default;
@@ -26,7 +25,7 @@ ATOM SceneView::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DEBUGPRINT(L"ERROR: RegisterClassEx failed for %s. Error: %s", SCENE_VIEW_CLASS_NAME,
+        DEBUG_ERROR(L"RegisterClassEx failed for %s. Error: %s", SCENE_VIEW_CLASS_NAME,
                    std::to_wstring(GetLastError()).c_str());
     }
     return atom;
@@ -80,7 +79,7 @@ LRESULT SceneView::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 bool SceneView::OnCreate(HWND hParent, UINT id) {
     // Register the custom window class for SceneView
     if (!RegisterWindowClass()) {
-        DEBUGPRINT(L"ERROR: Failed to register SceneView window class!\n");
+        DEBUG_ERROR(L"Failed to register SceneView window class!\n");
         return false;
     }
 
@@ -98,7 +97,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
     );
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT(L"ERROR: Failed to create SceneView window. Error: %s",
+        DEBUG_ERROR(L"Failed to create SceneView window. Error: %s",
                    std::to_wstring(GetLastError()).c_str());
         return false;
     }
@@ -106,7 +105,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
     // 3. Get initial client area dimensions
     RECT clientRect;
     if (!GetClientRect(mHWnd, &clientRect)) {
-        DEBUGPRINT(L"ERROR: Failed to get client rect for SceneView window! Error: %s",
+        DEBUG_ERROR(L"Failed to get client rect for SceneView window! Error: %s",
                    std::to_wstring(GetLastError()).c_str());
         DestroyWindow(mHWnd); // Clean up partially created window
         return false;
@@ -116,27 +115,26 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
     int height = clientRect.bottom - clientRect.top;
 
     mCamera = std::make_unique<Camera>();
-    mDevice = std::make_unique<Device>(mHWnd);
-    if (!mDevice->CreateRenderer(mRenderer)) {
-        DEBUGPRINT(L"Failed to initialize a Device.\n");
-        // Consider destroying the window here if device creation is critical
+
+    if (!Device::Create(mHWnd, mDevice)) {
+        DEBUG_ERROR(L"Failed to initialize a Device.\n");
         DestroyWindow(mHWnd);
         return false;
     }
 
-    mRenderer->OnResize(width, height);
+    mDevice->OnResize(width, height);
     return true;
 }
 
 // Handles WM_SIZE messages for the SceneView window.
-void SceneView::OnResize(int Width, int Height) {
-    if (mRenderer && Width > 0 && Height > 0) {
-        mRenderer->OnResize(Width, Height);
+void SceneView::OnResize(int Width, int Height) const {
+    if (mDevice && Width > 0 && Height > 0) {
+        mDevice->OnResize(Width, Height);
     }
 }
 
-void SceneView::OnUpdate() {
-    if (mRenderer && mCamera) {
-        mRenderer->Draw(*mCamera);
+void SceneView::OnUpdate() const {
+    if (mDevice && mCamera) {
+        mDevice->Draw(*mCamera);
     }
 }

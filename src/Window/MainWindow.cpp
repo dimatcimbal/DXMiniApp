@@ -28,13 +28,13 @@ MainWindow::MainWindow()
 
     // Register the main window class. If registration fails, an error is logged.
     if (!RegisterWindowClass()) {
-        DEBUGPRINT(L"ERROR: Failed to register main window class!\n");
+        DEBUG_ERROR(L"Failed to register main window class!\n");
         return;
     }
 
     // Create the main application window. If creation fails, an error is logged.
     if (!CreateMainWindow()) {
-        DEBUGPRINT(L"ERROR: Failed to create main window!\n");
+        DEBUG_ERROR(L"Failed to create main window!\n");
         return;
     }
 }
@@ -59,7 +59,7 @@ ATOM MainWindow::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DEBUGPRINT(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
+        DEBUG_ERROR(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
                    std::to_wstring(GetLastError()).c_str());
     }
     return atom;
@@ -72,7 +72,7 @@ bool MainWindow::CreateMainWindow() {
     WNDCLASSEX wcInfo = {};
     wcInfo.cbSize = sizeof(WNDCLASSEX);
     if (!GetClassInfoEx(mHInstance, MAIN_CLASS_NAME, &wcInfo)) {
-        DEBUGPRINT(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
+        DEBUG_ERROR(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
                    std::to_wstring(GetLastError()).c_str());
         return false;
     }
@@ -92,7 +92,7 @@ bool MainWindow::CreateMainWindow() {
     );
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
+        DEBUG_ERROR(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
@@ -180,13 +180,13 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     // --- Create the Menu Bar ---
     HMENU hMenuBar = CreateMenu();
     if (hMenuBar == nullptr) {
-        DEBUGPRINT(L"ERROR: Failed to create menu bar!\n");
+        DEBUG_ERROR(L"Failed to create menu bar!\n");
         return;
     }
 
     HMENU hSceneMenu = CreatePopupMenu();
     if (hSceneMenu == nullptr) {
-        DEBUGPRINT(L"ERROR: Failed to create scene menu!\n");
+        DEBUG_ERROR(L"Failed to create scene menu!\n");
         DestroyMenu(hMenuBar);
         return;
     }
@@ -216,13 +216,13 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     mHwndSplitter1 = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_GRAYRECT, 0, 0, 0,
                                     0, hWnd, splitter1Id, mHInstance, nullptr);
     if (!mHwndSplitter1)
-        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter1!\n");
+        DEBUG_ERROR(L"Failed to create m_hwndSplitter1!\n");
 
     HMENU splitter2Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter2));
     mHwndSplitter2 = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_GRAYRECT, 0, 0, 0,
                                     0, hWnd, splitter2Id, mHInstance, nullptr);
     if (!mHwndSplitter2)
-        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter2!\n");
+        DEBUG_ERROR(L"Failed to create m_hwndSplitter2!\n");
 
     // Perform initial layout after all controls are created.
     RECT rcClient;
