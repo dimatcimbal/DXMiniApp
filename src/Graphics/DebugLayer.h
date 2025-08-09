@@ -4,7 +4,7 @@
 #include <wrl/client.h>
 
 // Include DX headers
-#include "Includes/DxInclude.h"
+#include "Includes/DXInclude.h"
 
 #include <Common/Debug.h>
 

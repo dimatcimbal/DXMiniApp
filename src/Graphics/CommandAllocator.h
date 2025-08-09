@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "Includes/DxInclude.h"
+#include "Includes/DXInclude.h"
 #include "Includes/WindowsInclude.h"
 
 class CommandAllocator {

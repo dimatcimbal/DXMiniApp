@@ -3,7 +3,7 @@
 #pragma once
 
 #include <memory>
-#include "Includes/DxInclude.h"
+#include "Includes/DXInclude.h"
 #include "Includes/WindowsInclude.h" // for HWND
 
 #include "CommandAllocator.h"

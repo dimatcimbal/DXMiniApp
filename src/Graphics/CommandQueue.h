@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "Includes/DxInclude.h"
+#include "Includes/DXInclude.h"
 #include "Includes/WindowsInclude.h"
 
 #include <mutex>
