@@ -60,6 +60,7 @@ class MainWindow {
     // layout) --- Recalculates and sets the positions of all child views based on current window
     // size and pane proportions.
     void LayoutChildViews(int clientWidth, int clientHeight);
+    void Destroy();
     int Run();
 
   private:

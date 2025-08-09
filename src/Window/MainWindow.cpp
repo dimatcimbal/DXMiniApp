@@ -60,7 +60,7 @@ ATOM MainWindow::RegisterWindowClass() {
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
         DEBUG_ERROR(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
-                   std::to_wstring(GetLastError()).c_str());
+                    std::to_wstring(GetLastError()).c_str());
     }
     return atom;
 }
@@ -73,7 +73,7 @@ bool MainWindow::CreateMainWindow() {
     wcInfo.cbSize = sizeof(WNDCLASSEX);
     if (!GetClassInfoEx(mHInstance, MAIN_CLASS_NAME, &wcInfo)) {
         DEBUG_ERROR(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
-                   std::to_wstring(GetLastError()).c_str());
+                    std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
@@ -199,16 +199,19 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     mFileProvider = std::make_unique<WorkingDirFileProvider>();
 
     mFileView = std::make_unique<FileView>(*mFileProvider);
-    if (mFileView)
+    if (mFileView) {
         mFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView));
+    }
 
     mSceneView = std::make_unique<SceneView>();
-    if (mSceneView)
+    if (mSceneView) {
         mSceneView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneView));
+    }
 
     mSceneTree = std::make_unique<SceneTree>();
-    if (mSceneTree)
+    if (mSceneTree) {
         mSceneTree->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneTree));
+    }
 
     // Create the fixed splitter controls as simple static rectangles.
     // They are now purely visual separators and don't handle mouse input.
@@ -228,6 +231,23 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     RECT rcClient;
     GetClientRect(hWnd, &rcClient);
     OnSize(rcClient.right, rcClient.bottom); // This calls LayoutChildViews
+}
+
+void MainWindow::Destroy() {
+    // Destroy the child views. We have to get the raw pointes to deduce to BaseView.
+    std::initializer_list<BaseView*> views = {mFileView.get(), mSceneTree.get(), mSceneView.get()};
+
+    for (BaseView* view : views) {
+        if (view) {
+            view->Destroy();
+        }
+    }
+
+    // Destroy the main window.
+    if (mHWnd) {
+        DestroyWindow(mHWnd);
+        mHWnd = nullptr;
+    }
 }
 
 int MainWindow::Run() {

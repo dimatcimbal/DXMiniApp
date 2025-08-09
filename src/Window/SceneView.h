@@ -4,6 +4,7 @@
 
 #include "BaseView.h"
 
+#include <Graphics/CommandContext.h>
 #include <memory>
 
 class Camera;
@@ -20,21 +21,25 @@ class SceneView : public BaseView {
 
     // Overrides BaseView::Create to create a custom window for the scene.
     bool OnCreate(HWND hParent, UINT id) override;
+    void OnDestroy() override;
     void OnResize(int Width, int Height) const;
     void OnUpdate() const;
 
   private:
-    std::unique_ptr<Device> mDevice;
+    std::unique_ptr<CommandContext> mContext;
     std::unique_ptr<Camera> mCamera;
 
     // --- Private helper methods for window management ---
     // Registers the window class for the SceneView window.
-    ATOM RegisterWindowClass();
+    bool RegisterWindowClass();
 
     // The static Window Procedure (trampoline) that dispatches messages to the correct SceneView
     // instance.
-    static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     // The instance-specific message handler where most of the window's message processing logic
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+private:
+  ATOM mAtom{0};
 };

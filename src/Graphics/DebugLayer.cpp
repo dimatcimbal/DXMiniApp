@@ -30,9 +30,9 @@ bool DebugLayer::Create(std::unique_ptr<DebugLayer>& output) {
  */
 void DebugLayer::ReportLiveObjects() {
 #ifdef _DEBUG
-    if (mD3dDebug) {
+    if (mD3DDebug) {
         DEBUG_INFO(L"Reporting LIVE D3D12 objects:\n");
-        mDxgiDebug->ReportLiveObjects(
+        mDXGIDebug->ReportLiveObjects(
             // Report all live objects
             DXGI_DEBUG_ALL,
             // Report in detail but ignore internal objects

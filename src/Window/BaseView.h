@@ -25,10 +25,18 @@ class BaseView {
     bool Create(HWND hParent, UINT id) {
         m_hParent = hParent;
         if (!OnCreate(hParent, id)) {
-            mHWnd = nullptr;
+            Destroy();
             return false;
         }
         return true;
+    }
+
+    void Destroy() {
+        OnDestroy();
+        if (mHWnd) {
+            DestroyWindow(mHWnd);
+            mHWnd = nullptr;
+        }
     }
 
     // Virtual method to handle resizing of the view component.
@@ -45,6 +53,7 @@ class BaseView {
     // hParent: The handle of the parent window.
     // id: A unique identifier for the child window.
     virtual bool OnCreate(HWND hParent, UINT id) = 0;
+    virtual void OnDestroy() {};
 
   protected:
     HWND m_hParent;

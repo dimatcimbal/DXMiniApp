@@ -21,7 +21,7 @@ class DebugLayer {
 #ifdef _DEBUG
     DebugLayer(Microsoft::WRL::ComPtr<ID3D12Debug6>&& d3dDebug,
                Microsoft::WRL::ComPtr<IDXGIDebug1>&& dxgiDebug)
-        : mD3dDebug(std::move(d3dDebug)), mDxgiDebug(std::move(dxgiDebug)) {};
+        : mD3DDebug(std::move(d3dDebug)), mDXGIDebug(std::move(dxgiDebug)) {};
 #endif
 
     // Deleted copy constructor and assignment operator to prevent copying
@@ -31,16 +31,18 @@ class DebugLayer {
     ~DebugLayer() {
 #ifdef _DEBUG
         ReportLiveObjects();
-        mDxgiDebug->Release();
-        mD3dDebug->Release();
+
+        // Release the debug interfaces
+        mDXGIDebug->Release();
+        mD3DDebug->Release();
 #endif
     };
 
     void ReportLiveObjects();
-    
+
 #ifdef _DEBUG
   private:
-    Microsoft::WRL::ComPtr<ID3D12Debug6> mD3dDebug; // DirectX debug layer interface
-    Microsoft::WRL::ComPtr<IDXGIDebug1> mDxgiDebug; // DXGI debug interface
+    Microsoft::WRL::ComPtr<ID3D12Debug6> mD3DDebug; // DirectX debug layer interface
+    Microsoft::WRL::ComPtr<IDXGIDebug1> mDXGIDebug; // DXGI debug interface
 #endif
 };

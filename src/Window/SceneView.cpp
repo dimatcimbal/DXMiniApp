@@ -1,6 +1,7 @@
 ﻿// src/Window/SceneView.cpp
 // Created by dtcimbal on 26/05/2025.
 #include "SceneView.h"
+#include <Graphics/CommandContext.h>
 #include <sstream> // For std::wostringstream
 #include <string>  // For std::to_wstring
 
@@ -13,10 +14,10 @@ SceneView::SceneView() = default;
 SceneView::~SceneView() = default;
 
 // Registers the window class for the SceneView window.
-ATOM SceneView::RegisterWindowClass() {
+bool SceneView::RegisterWindowClass() {
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
-    wc.lpfnWndProc = StaticWindowProc;
+    wc.lpfnWndProc = OnWindowMessage;
     wc.hInstance = GetModuleHandle(nullptr);
     wc.lpszClassName = SCENE_VIEW_CLASS_NAME;
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
@@ -26,13 +27,15 @@ ATOM SceneView::RegisterWindowClass() {
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
         DEBUG_ERROR(L"RegisterClassEx failed for %s. Error: %s", SCENE_VIEW_CLASS_NAME,
-                   std::to_wstring(GetLastError()).c_str());
+                    std::to_wstring(GetLastError()).c_str());
+        return false;
     }
-    return atom;
+    mAtom = atom;
+    return true;
 }
 
-// Static Window Procedure (Trampoline) for SceneView:
-LRESULT CALLBACK SceneView::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+// OmWindowMessage
+LRESULT CALLBACK SceneView::OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     SceneView* pThis = nullptr;
 
     if (uMsg == WM_NCCREATE) {
@@ -98,7 +101,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
 
     if (mHWnd == nullptr) {
         DEBUG_ERROR(L"Failed to create SceneView window. Error: %s",
-                   std::to_wstring(GetLastError()).c_str());
+                    std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
@@ -106,7 +109,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
     RECT clientRect;
     if (!GetClientRect(mHWnd, &clientRect)) {
         DEBUG_ERROR(L"Failed to get client rect for SceneView window! Error: %s",
-                   std::to_wstring(GetLastError()).c_str());
+                    std::to_wstring(GetLastError()).c_str());
         DestroyWindow(mHWnd); // Clean up partially created window
         return false;
     }
@@ -116,25 +119,30 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
 
     mCamera = std::make_unique<Camera>();
 
-    if (!Device::Create(mHWnd, mDevice)) {
+    if (!CommandContext::Create(mHWnd, mContext)) {
         DEBUG_ERROR(L"Failed to initialize a Device.\n");
-        DestroyWindow(mHWnd);
         return false;
     }
 
-    mDevice->OnResize(width, height);
+    mContext->OnResize(width, height);
     return true;
+}
+
+void SceneView::OnDestroy() {
+    if (mAtom) {
+        UnregisterClass(reinterpret_cast<LPCWSTR>(mAtom), GetModuleHandle(nullptr));
+    }
 }
 
 // Handles WM_SIZE messages for the SceneView window.
 void SceneView::OnResize(int Width, int Height) const {
-    if (mDevice && Width > 0 && Height > 0) {
-        mDevice->OnResize(Width, Height);
+    if (mContext && Width > 0 && Height > 0) {
+        mContext->OnResize(Width, Height);
     }
 }
 
 void SceneView::OnUpdate() const {
-    if (mDevice && mCamera) {
-        mDevice->Draw(*mCamera);
+    if (mContext && mCamera) {
+        mContext->Draw(*mCamera);
     }
 }
