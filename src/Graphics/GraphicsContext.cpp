@@ -1,6 +1,6 @@
-#include "CommandContext.h"
+#include "GraphicsContext.h"
 
-bool CommandContext::Create(HWND hWnd, std::unique_ptr<CommandContext>& OutContext) {
+bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutContext) {
 
     std::unique_ptr<DebugLayer> DebugLayer;
     if (!DebugLayer::Create(DebugLayer)) {
@@ -32,16 +32,16 @@ bool CommandContext::Create(HWND hWnd, std::unique_ptr<CommandContext>& OutConte
     }
 
     OutContext =
-        std::make_unique<CommandContext>(hWnd, std::move(CommandAllocator), std::move(CommandQueue),
+        std::make_unique<GraphicsContext>(hWnd, std::move(CommandAllocator), std::move(CommandQueue),
                                          std::move(DebugLayer), std::move(Device));
 }
 
-bool CommandContext::OnResize(uint32_t NewWidth, uint32_t NewHeight) {
+bool GraphicsContext::OnResize(uint32_t NewWidth, uint32_t NewHeight) {
     // TODO Handle resizing logic here
     return true;
 }
 
-bool CommandContext::Draw(Camera& Camera) {
+bool GraphicsContext::Draw(Camera& Camera) {
     // TODO Handle rendering logic here
     return true;
 }

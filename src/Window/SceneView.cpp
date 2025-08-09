@@ -1,7 +1,7 @@
 ﻿// src/Window/SceneView.cpp
 // Created by dtcimbal on 26/05/2025.
 #include "SceneView.h"
-#include <Graphics/CommandContext.h>
+#include <Graphics/GraphicsContext.h>
 #include <sstream> // For std::wostringstream
 #include <string>  // For std::to_wstring
 
@@ -119,12 +119,12 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
 
     mCamera = std::make_unique<Camera>();
 
-    if (!CommandContext::Create(mHWnd, mContext)) {
+    if (!GraphicsContext::Create(mHWnd, mGraphicsContext)) {
         DEBUG_ERROR(L"Failed to initialize a Device.\n");
         return false;
     }
 
-    mContext->OnResize(width, height);
+    mGraphicsContext->OnResize(width, height);
     return true;
 }
 
@@ -136,13 +136,13 @@ void SceneView::OnDestroy() {
 
 // Handles WM_SIZE messages for the SceneView window.
 void SceneView::OnResize(int Width, int Height) const {
-    if (mContext && Width > 0 && Height > 0) {
-        mContext->OnResize(Width, Height);
+    if (mGraphicsContext && Width > 0 && Height > 0) {
+        mGraphicsContext->OnResize(Width, Height);
     }
 }
 
 void SceneView::OnUpdate() const {
-    if (mContext && mCamera) {
-        mContext->Draw(*mCamera);
+    if (mGraphicsContext && mCamera) {
+        mGraphicsContext->Draw(*mCamera);
     }
 }

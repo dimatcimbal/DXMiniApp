@@ -4,7 +4,7 @@
 
 #include "BaseView.h"
 
-#include <Graphics/CommandContext.h>
+#include <Graphics/GraphicsContext.h>
 #include <memory>
 
 class Camera;
@@ -26,7 +26,7 @@ class SceneView : public BaseView {
     void OnUpdate() const;
 
   private:
-    std::unique_ptr<CommandContext> mContext;
+    std::unique_ptr<GraphicsContext> mGraphicsContext;
     std::unique_ptr<Camera> mCamera;
 
     // --- Private helper methods for window management ---
