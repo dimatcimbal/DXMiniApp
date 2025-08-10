@@ -1,10 +1,9 @@
 #pragma once
 
 #include <memory>
-#include "Includes/DXInclude.h"
-#include "Includes/WindowsInclude.h"
-
 #include <mutex>
+#include <wrl/client.h>
+#include "Includes/DXInclude.h"
 
 class CommandQueue {
   public:

@@ -4,15 +4,8 @@
 #include <wrl/client.h>
 
 // Include DX headers
-#include "Includes/DXInclude.h"
-
 #include <Common/Debug.h>
-
-// Include DX debug headers
-#ifdef _DEBUG
-#include <d3d12sdklayers.h>
-#include <dxgidebug.h>
-#endif
+#include "Includes/DXInclude.h"
 
 class DebugLayer {
   public:

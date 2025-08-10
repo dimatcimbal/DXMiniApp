@@ -1,9 +1,8 @@
 #pragma once
 
 #include <algorithm>
-
+#include <wrl/client.h>
 #include "Includes/DXInclude.h"
-#include "Includes/WindowsInclude.h"
 
 class CommandAllocator {
   public:

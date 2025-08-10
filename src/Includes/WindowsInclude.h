@@ -3,6 +3,4 @@
 
 // Exclude min and max macro
 #define NOMINMAX
-
 #include <Windows.h>
-#include <wrl/client.h>
