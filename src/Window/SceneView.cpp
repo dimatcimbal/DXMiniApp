@@ -94,7 +94,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // Basic child window styles
         0, 0, 0, 0,               // Position and size set by parent (MainWindow)
         hParent,                  // Parent window handle
-        (HMENU)(INT_PTR)id,       // Child window ID
+        reinterpret_cast<HMENU>(id),       // Child window ID
         GetModuleHandle(nullptr), // Instance handle
         this                      // Pointer to 'this' passed as creation parameter
     );

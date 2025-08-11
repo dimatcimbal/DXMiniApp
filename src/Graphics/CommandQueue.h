@@ -19,9 +19,6 @@ class CommandQueue {
         if (mFenceEvent) {
             CloseHandle(mFenceEvent);
         }
-
-        mD3D12CommandQueue->Release();
-        mD3D12Fence->Release();
     };
 
     // Deleted copy constructor and assignment operator to prevent copying

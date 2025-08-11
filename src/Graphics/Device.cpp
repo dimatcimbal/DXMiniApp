@@ -1,9 +1,10 @@
 ﻿//
 // Created by dtcimbal on 27/07/2025.
+#include "Includes/WindowsInclude.h"
 #include "Device.h"
 
 #include <Common/Debug.h>
-
+#include <algorithm>
 #include "CommandAllocator.h"
 #include "CommandQueue.h"
 #include "DebugLayer.h"
@@ -22,8 +23,8 @@ bool Device::Create(D3D_FEATURE_LEVEL FeatureLevel,
     Microsoft::WRL::ComPtr<IDXGIAdapter1> pAdapter;
     Microsoft::WRL::ComPtr<ID3D12Device14> pBestDevice;
 
-    SIZE_T MaxMemory = 0;
-    for (uint32_t i = 0; pDxgiFactory->EnumAdapters1(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
+    SIZE_T MaxMemory{0};
+    for (uint32_t i{0}; pDxgiFactory->EnumAdapters1(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
         DXGI_ADAPTER_DESC1 desc;
         pAdapter->GetDesc1(&desc);
 
@@ -41,13 +42,8 @@ bool Device::Create(D3D_FEATURE_LEVEL FeatureLevel,
         }
 
         // An adapter with the *most* dedicated video memory
-        if (desc.DedicatedVideoMemory > MaxMemory) {
-            MaxMemory = desc.DedicatedVideoMemory;
-            pBestDevice = std::move(pD3D12Device);
-        }
-
-        // An adapter with the *most* dedicated video memory
         if (HasMaxVideoMemory) {
+            // An adapter with the *most* dedicated video memory
             if (desc.DedicatedVideoMemory > MaxMemory) {
                 MaxMemory = desc.DedicatedVideoMemory;
                 pBestDevice = std::move(pD3D12Device);
@@ -56,7 +52,7 @@ bool Device::Create(D3D_FEATURE_LEVEL FeatureLevel,
             pBestDevice = std::move(pD3D12Device);
         }
 
-        pAdapter.Reset();
+        // pAdapter.Reset();
     }
 
     if (!pBestDevice) {
@@ -74,33 +70,36 @@ bool Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type,
 
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> pD3D12CommandAllocator;
     if FAILED (mD3dDevice->CreateCommandAllocator(Type, IID_PPV_ARGS(&pD3D12CommandAllocator))) {
-        DEBUG_ERROR(L"Failed to create CommandAllocator.\n");
+        DEBUG_ERROR(L"Failed to create ID3D12CommandAllocator.\n");
         return false;
     }
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList10> pD3D12CommandList;
     if FAILED (mD3dDevice->CreateCommandList1(0, Type, Flags,
-                                              IID_PPV_ARGS(&pD3D12CommandAllocator))) {
-        DEBUG_ERROR("Failed to create CommandList.\n");
+                                              IID_PPV_ARGS(&pD3D12CommandList))) {
+        DEBUG_ERROR("Failed to create ID3D12GraphicsCommandList10.\n");
         return false;
     }
 
     OutAllocator = std::make_unique<CommandAllocator>(Type, std::move(pD3D12CommandAllocator),
                                                       std::move(pD3D12CommandList));
+    return true;
 }
 
 bool Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
-                                D3D12_RESIDENCY_PRIORITY Priority,
+                                D3D12_COMMAND_QUEUE_PRIORITY Priority,
+                                D3D12_COMMAND_QUEUE_FLAGS Flags,
                                 std::unique_ptr<CommandQueue>& OutQueue) {
     // The command queue desc
     D3D12_COMMAND_QUEUE_DESC QueueDesc = {};
     QueueDesc.Type = Type;
     QueueDesc.Priority = Priority;
     QueueDesc.NodeMask = 0; // default node mask
-
+    QueueDesc.Flags = Flags;
+    
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> pD3D12CommandQueue;
     if FAILED (mD3dDevice->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&pD3D12CommandQueue))) {
-        DEBUG_ERROR(L"Failed to create CommandQueue.\n");
+        DEBUG_ERROR(L"Failed to create ID3D12CommandQueue.\n");
         return false;
     }
 
@@ -108,7 +107,7 @@ bool Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
     Microsoft::WRL::ComPtr<ID3D12Fence1> pD3D12Fence;
     if FAILED (mD3dDevice->CreateFence(InitFenceValue, D3D12_FENCE_FLAG_NONE,
                                        IID_PPV_ARGS(&pD3D12Fence))) {
-        DEBUG_ERROR(L"Failed to create Fence.\n");
+        DEBUG_ERROR(L"Failed to create ID3D12Fence1.\n");
         return false;
     }
 
@@ -121,4 +120,5 @@ bool Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
 
     OutQueue = std::make_unique<CommandQueue>(
         Type, InitFenceValue, EventHandle, std::move(pD3D12CommandQueue), std::move(pD3D12Fence));
+    return true;
 }
