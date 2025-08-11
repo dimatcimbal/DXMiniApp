@@ -40,6 +40,6 @@ class SceneView : public BaseView {
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-private:
-  ATOM mAtom{0};
+  private:
+    ATOM mAtom{0};
 };

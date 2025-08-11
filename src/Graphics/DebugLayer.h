@@ -24,10 +24,6 @@ class DebugLayer {
     ~DebugLayer() {
 #ifdef _DEBUG
         ReportLiveObjects();
-
-        // Release the debug interfaces
-        mDXGIDebug->Release();
-        mD3DDebug->Release();
 #endif
     };
 

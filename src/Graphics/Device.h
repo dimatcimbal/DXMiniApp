@@ -1,14 +1,12 @@
 ﻿//
 // Created by dtcimbal on 27/07/2025.
 #pragma once
-
 #include <memory>
-#include "Includes/DXInclude.h"
-#include "Includes/WindowsInclude.h" // for HWND
-
 #include "CommandAllocator.h"
 #include "CommandQueue.h"
 #include "DebugLayer.h"
+#include "Includes/DXInclude.h"
+#include "Includes/WindowsInclude.h" // for HWND
 
 class Camera;
 
@@ -25,7 +23,8 @@ class Device {
                                 std::unique_ptr<CommandAllocator>& OutAllocator);
 
     bool CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
-                            D3D12_RESIDENCY_PRIORITY Priority,
+                            D3D12_COMMAND_QUEUE_PRIORITY Priority,
+                            D3D12_COMMAND_QUEUE_FLAGS Flags,
                             std::unique_ptr<CommandQueue>& OutQueue);
 
     Device(Microsoft::WRL::ComPtr<IDXGIFactory7>&& DxgiFactory,

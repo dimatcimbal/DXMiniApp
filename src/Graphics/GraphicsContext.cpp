@@ -15,6 +15,15 @@ bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutCon
         return false;
     }
 
+    // Create the Command Queue with the Device
+    std::unique_ptr<CommandQueue> CommandQueue;
+    if (!Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                    D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
+                                    D3D12_COMMAND_QUEUE_FLAG_NONE, CommandQueue)) {
+        DEBUG_ERROR(L"Failed to create the Command Queue.\n");
+        return false;
+    }
+
     // Create the Command Allocator with the Device
     std::unique_ptr<CommandAllocator> CommandAllocator;
     if (!Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -23,17 +32,10 @@ bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutCon
         return false;
     }
 
-    // Create the Command Queue with the Device
-    std::unique_ptr<CommandQueue> CommandQueue;
-    if (!Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_RESIDENCY_PRIORITY_HIGH,
-                                    CommandQueue)) {
-        DEBUG_ERROR(L"Failed to create the Command Queue.\n");
-        return false;
-    }
-
-    OutContext =
-        std::make_unique<GraphicsContext>(hWnd, std::move(CommandAllocator), std::move(CommandQueue),
-                                         std::move(DebugLayer), std::move(Device));
+    OutContext = std::make_unique<GraphicsContext>(hWnd, std::move(CommandAllocator),
+                                                   std::move(CommandQueue), std::move(DebugLayer),
+                                                   std::move(Device));
+    return true;
 }
 
 bool GraphicsContext::OnResize(uint32_t NewWidth, uint32_t NewHeight) {

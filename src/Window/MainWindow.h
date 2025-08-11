@@ -92,14 +92,14 @@ class MainWindow {
     // --- Static and Instance-Specific Window Procedures ---
     // The static Window Procedure (trampoline) that dispatches messages to the correct MainWindow
     // instance.
-    static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     // The instance-specific message handler where most of the window's message processing logic
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     // --- Message Handlers ---
     // Handles the WM_CREATE message, typically used for creating child windows and initializing UI.
-    void OnCreate(HWND hWnd, LPCREATESTRUCT pcs);
+    bool OnCreate(HWND hWnd, LPCREATESTRUCT pcs);
     // Handles the WM_SIZE message, used for resizing and repositioning child windows.
     void OnSize(int clientWidth, int clientHeight);
 
