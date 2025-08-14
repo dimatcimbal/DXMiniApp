@@ -198,7 +198,7 @@ bool MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
 
     // Create instances of our view components
     mFileProvider = std::make_unique<WorkingDirFileProvider>();
-    
+
     mFileView = std::make_unique<FileView>(*mFileProvider);
     if (!mFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView))) {
         DEBUG_ERROR(L"Failed to create FileView!\n");

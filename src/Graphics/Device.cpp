@@ -1,7 +1,7 @@
 ﻿//
 // Created by dtcimbal on 27/07/2025.
-#include "Includes/WindowsInclude.h"
 #include "Device.h"
+#include "Includes/WindowsInclude.h"
 
 #include <Common/Debug.h>
 #include <algorithm>
@@ -75,8 +75,7 @@ bool Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type,
     }
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList10> pD3D12CommandList;
-    if FAILED (mD3dDevice->CreateCommandList1(0, Type, Flags,
-                                              IID_PPV_ARGS(&pD3D12CommandList))) {
+    if FAILED (mD3dDevice->CreateCommandList1(0, Type, Flags, IID_PPV_ARGS(&pD3D12CommandList))) {
         DEBUG_ERROR("Failed to create ID3D12GraphicsCommandList10.\n");
         return false;
     }
@@ -96,7 +95,7 @@ bool Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
     QueueDesc.Priority = Priority;
     QueueDesc.NodeMask = 0; // default node mask
     QueueDesc.Flags = Flags;
-    
+
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> pD3D12CommandQueue;
     if FAILED (mD3dDevice->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&pD3D12CommandQueue))) {
         DEBUG_ERROR(L"Failed to create ID3D12CommandQueue.\n");

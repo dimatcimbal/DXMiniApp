@@ -52,7 +52,7 @@ class GraphicsContext {
     // Deleted copy constructor and assignment operator to prevent copying
     GraphicsContext(Device& copy) = delete;
     GraphicsContext& operator=(const GraphicsContext& copy) = delete;
- 
+
     bool OnResize(uint32_t NewWidth, uint32_t NewHeight);
     bool Draw(Camera& Camera);
 

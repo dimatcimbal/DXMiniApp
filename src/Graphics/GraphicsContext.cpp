@@ -17,7 +17,8 @@ bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutCon
 
     // Create the Command Queue with the Device
     std::unique_ptr<CommandQueue> CommandQueue;
-    if (!Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
+    if (!Device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                    D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
                                     D3D12_COMMAND_QUEUE_FLAG_NONE, CommandQueue)) {
         DEBUG_ERROR(L"Failed to create the Command Queue.\n");
         return false;
