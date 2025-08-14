@@ -30,7 +30,9 @@ class Device {
     Device(Microsoft::WRL::ComPtr<IDXGIFactory7>&& DxgiFactory,
            Microsoft::WRL::ComPtr<ID3D12Device14> D3dDevice)
         : mDxgiFactory(std::move(DxgiFactory)), mD3dDevice(std::move(D3dDevice)) {};
-    ~Device() = default;
+    ~Device() {
+        DEBUG_INFO(L"Freeing Device.\n");
+    };
 
     // Deleted copy constructor and assignment operator to prevent copying
     Device(Device& copy) = delete;

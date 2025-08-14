@@ -3,6 +3,8 @@
 #include <memory>
 #include <mutex>
 #include <wrl/client.h>
+
+#include "Common/Debug.h"
 #include "Includes/DXInclude.h"
 
 class CommandQueue {
@@ -16,6 +18,8 @@ class CommandQueue {
           mD3D12CommandQueue(std::move(pD3D12CommandQueue)), mD3D12Fence(std::move(pD3D12Fence)) {
     }
     ~CommandQueue() {
+        DEBUG_INFO(L"Freeing CommandQueue of type %d with next fence value %llu.\n", mType,
+                   mNextFenceValue);
         if (mFenceEvent) {
             CloseHandle(mFenceEvent);
         }

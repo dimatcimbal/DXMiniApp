@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <wrl/client.h>
+
+#include "Common/Debug.h"
 #include "Includes/DXInclude.h"
 
 class CommandAllocator {
@@ -12,7 +14,9 @@ class CommandAllocator {
         : mType(Type), mD3D12CommandAllocator(std::move(pD3D12CommandAllocator)),
           mD3D12CommandList(std::move(pD3D12CommandList)) {
     }
-    ~CommandAllocator() = default;
+    ~CommandAllocator() {
+        DEBUG_INFO(L"Freeing CommandAllocator for type: %d.\n", mType);
+    };
 
     CommandAllocator(CommandAllocator& other) = delete;                  // Disable copy constructor
     CommandAllocator& operator=(const CommandAllocator& other) = delete; // Disable copy assignment
