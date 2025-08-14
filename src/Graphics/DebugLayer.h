@@ -22,7 +22,7 @@ class DebugLayer {
     DebugLayer& operator=(const DebugLayer& other) = delete;
 
     ~DebugLayer() {
-      DEBUG_INFO(L"Freeing DebugLayer.\n");
+        DEBUG_INFO(L"Freeing DebugLayer.\n");
 #ifdef _DEBUG
         ReportLiveObjects();
 #endif

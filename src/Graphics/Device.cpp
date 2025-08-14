@@ -56,7 +56,7 @@ bool Device::Create(D3D_FEATURE_LEVEL FeatureLevel,
     }
 
     if (!pBestDevice) {
-        DEBUG_ERROR("No suitable D3D12 device found.\n");
+        DEBUG_ERROR(L"No suitable D3D12 device found.\n");
         return false; // No suitable device found
     }
 
@@ -76,7 +76,7 @@ bool Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type,
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList10> pD3D12CommandList;
     if FAILED (mD3dDevice->CreateCommandList1(0, Type, Flags, IID_PPV_ARGS(&pD3D12CommandList))) {
-        DEBUG_ERROR("Failed to create ID3D12GraphicsCommandList10.\n");
+        DEBUG_ERROR(L"Failed to create ID3D12GraphicsCommandList10.\n");
         return false;
     }
 

@@ -7,7 +7,7 @@ bool CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList10* CommandList) 
     // std::lock_guard<std::mutex> LockGuard(mFenceValueMutex);
 
     if FAILED (CommandList->Close()) {
-        DEBUG_ERROR("Failed to close command list.\n");
+        DEBUG_ERROR(L"Failed to close command list.\n");
         return false; // Failed to close the command list
     }
 

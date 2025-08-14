@@ -34,7 +34,7 @@ bool SceneView::RegisterWindowClass() {
     return true;
 }
 
-// OmWindowMessage
+// OnWindowMessage
 LRESULT CALLBACK SceneView::OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     SceneView* pThis = nullptr;
 

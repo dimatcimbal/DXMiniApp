@@ -25,10 +25,8 @@ class SceneView : public BaseView {
     void OnResize(int Width, int Height) const;
     void OnUpdate() const;
 
+    // Private methods
   private:
-    std::unique_ptr<GraphicsContext> mGraphicsContext;
-    std::unique_ptr<Camera> mCamera;
-
     // --- Private helper methods for window management ---
     // Registers the window class for the SceneView window.
     bool RegisterWindowClass();
@@ -40,6 +38,9 @@ class SceneView : public BaseView {
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+    // Private instance values
   private:
+    std::unique_ptr<GraphicsContext> mGraphicsContext;
+    std::unique_ptr<Camera> mCamera;
     ATOM mAtom{0};
 };

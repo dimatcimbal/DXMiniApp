@@ -243,7 +243,7 @@ bool MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
 }
 
 void MainWindow::Destroy() {
-    // Destroy the child views. We have to get the raw pointes to deduce to BaseView.
+    // Destroy the child views. We have to get the raw pointers to deduce to BaseView.
     std::initializer_list<BaseView*> views = {mFileView.get(), mSceneTree.get(), mSceneView.get()};
 
     for (BaseView* view : views) {
