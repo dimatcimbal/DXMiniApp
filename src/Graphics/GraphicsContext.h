@@ -47,7 +47,20 @@ class GraphicsContext {
         : mHWnd(hWnd), mCommandAllocator(std::move(CommandAllocator)),
           mCommandQueue(std::move(CommandQueue)), mDebugLayer(std::move(DebugLayer)),
           mDevice(std::move(Device)) {};
-    ~GraphicsContext() = default;
+    ~GraphicsContext() {
+        // Free up mCommandAllocator.
+        mCommandAllocator.reset();
+
+        // Free up mCommandQueue.
+        mCommandQueue.reset();
+
+        // Free up mDevice.
+        mDevice.reset();
+
+        // IMPORTANT. Freeing up DebugLayer at the very last to report on LIVE objects
+        // before the context is destroyed.
+        mDebugLayer.reset();
+    };
 
     // Deleted copy constructor and assignment operator to prevent copying
     GraphicsContext(Device& copy) = delete;
@@ -57,9 +70,9 @@ class GraphicsContext {
     bool Draw(Camera& Camera);
 
   private:
+    std::unique_ptr<DebugLayer> mDebugLayer;
     std::unique_ptr<CommandAllocator> mCommandAllocator;
     std::unique_ptr<CommandQueue> mCommandQueue;
-    std::unique_ptr<DebugLayer> mDebugLayer;
     std::unique_ptr<Device> mDevice;
     HWND mHWnd;
 };
