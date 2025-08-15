@@ -24,7 +24,7 @@ bool SceneTree::OnCreate(HWND hParent, UINT id) {
                        hParent, (HMENU)(INT_PTR)id, GetModuleHandle(nullptr), nullptr);
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT(L"Failed to create SceneTree TreeView.\n");
+        DEBUG_ERROR(L"Failed to create SceneTree TreeView.\n");
         return false;
     }
 

@@ -4,11 +4,8 @@
 
 #include "BaseView.h"
 
+#include <Graphics/GraphicsContext.h>
 #include <memory>
-
-class Camera;
-class Device;
-class Renderer;
 
 // Define a unique class name for the SceneView window
 const static LPCWSTR SCENE_VIEW_CLASS_NAME = L"DXMiniAppSceneView";
@@ -20,22 +17,23 @@ class SceneView : public BaseView {
 
     // Overrides BaseView::Create to create a custom window for the scene.
     bool OnCreate(HWND hParent, UINT id) override;
-    void OnResize(int Width, int Height);
-    void OnUpdate();
+    void OnDestroy() override;
+    void OnResize(int Width, int Height) const;
 
+    // Private methods
   private:
-    std::unique_ptr<Device> mDevice;
-    std::unique_ptr<Renderer> mRenderer;
-    std::unique_ptr<Camera> mCamera;
-
     // --- Private helper methods for window management ---
     // Registers the window class for the SceneView window.
-    ATOM RegisterWindowClass();
+    bool RegisterWindowClass();
 
     // The static Window Procedure (trampoline) that dispatches messages to the correct SceneView
     // instance.
-    static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     // The instance-specific message handler where most of the window's message processing logic
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    // Private instance values
+  private:
+    ATOM mAtom{0};
 };

@@ -8,8 +8,6 @@
 #include "FileView.h" // Include definitions for view component classes
 #include "MainWindow.h"
 
-#include <sstream>
-
 #include "Common/Debug.h"
 #include "Files/WorkingDirFileProvider.h"
 #include "SceneTree.h"
@@ -17,32 +15,28 @@
 
 // Anonymous namespace for constants internal to this compilation unit
 namespace {
-const int SPLITTER_WIDTH = 5; // Thickness of the splitter bars in pixels
+constexpr int SPLITTER_WIDTH = 5; // Thickness of the splitter bars in pixels
 } // anonymous namespace
 
-// Constructor: Initializes members and performs window class registration and main window creation.
-MainWindow::MainWindow()
-    : mHWnd(nullptr), mHwndSplitter1(nullptr), mHwndSplitter2(nullptr),
-      mHInstance(GetModuleHandle(nullptr)) {
-    // No pane proportions needed for fixed splitters; layout will be hardcoded.
+// Static Factory Method: Creates and initializes a MainWindow instance.
+// Returns a unique_ptr to the new MainWindow, or nullptr on failure.
+bool MainWindow::Create(std::unique_ptr<MainWindow>& OutWindow) {
+    auto window = std::make_unique<MainWindow>();
 
-    // Register the main window class. If registration fails, an error is logged.
-    if (!RegisterWindowClass()) {
-        DEBUGPRINT(L"ERROR: Failed to register main window class!\n");
-        return;
+    // Register the main window class.
+    if (!window->RegisterWindowClass()) {
+        DEBUG_ERROR(L"Failed to register main window class!\n");
+        return false;
     }
 
-    // Create the main application window. If creation fails, an error is logged.
-    if (!CreateMainWindow()) {
-        DEBUGPRINT(L"ERROR: Failed to create main window!\n");
-        return;
+    // Create the main application window.
+    if (!window->CreateMainWindow()) {
+        DEBUG_ERROR(L"Failed to create main window!\n");
+        return false;
     }
-}
 
-// Destructor: Cleans up resources.
-MainWindow::~MainWindow() {
-    // No explicit cleanup for HWNDs or unique_ptrs needed here due to RAII and Windows' message
-    // loop.
+    OutWindow = std::move(window);
+    return true;
 }
 
 // Registers the window class for the main application window.
@@ -50,7 +44,7 @@ MainWindow::~MainWindow() {
 ATOM MainWindow::RegisterWindowClass() {
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
-    wc.lpfnWndProc = StaticWindowProc;            // Our static message handler
+    wc.lpfnWndProc = OnWindowMessage;             // Our static message handler
     wc.hInstance = mHInstance;                    // Instance handle for the application
     wc.lpszClassName = MAIN_CLASS_NAME;           // Unique class name
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW); // Standard arrow cursor
@@ -59,8 +53,8 @@ ATOM MainWindow::RegisterWindowClass() {
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0) {
-        DEBUGPRINT(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
-                   std::to_wstring(GetLastError()).c_str());
+        DEBUG_ERROR(L"RegisterClassEx failed for %s. Error: %s", MAIN_CLASS_NAME,
+                    std::to_wstring(GetLastError()).c_str());
     }
     return atom;
 }
@@ -72,8 +66,8 @@ bool MainWindow::CreateMainWindow() {
     WNDCLASSEX wcInfo = {};
     wcInfo.cbSize = sizeof(WNDCLASSEX);
     if (!GetClassInfoEx(mHInstance, MAIN_CLASS_NAME, &wcInfo)) {
-        DEBUGPRINT(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
-                   std::to_wstring(GetLastError()).c_str());
+        DEBUG_ERROR(L"CreateMainWindow: Class '%s' is NOT registered! Error: %s", MAIN_CLASS_NAME,
+                    std::to_wstring(GetLastError()).c_str());
         return false;
     }
 
@@ -92,7 +86,13 @@ bool MainWindow::CreateMainWindow() {
     );
 
     if (mHWnd == nullptr) {
-        DEBUGPRINT(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
+        DEBUG_ERROR(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
+        return false;
+    }
+
+    // Create Graphics context
+    if (!GraphicsContext::Create(mGraphicsContext)) {
+        DEBUG_ERROR(L"Failed to create GraphicsContext.\n");
         return false;
     }
 
@@ -104,7 +104,7 @@ bool MainWindow::CreateMainWindow() {
 }
 
 // Static Window Procedure (Trampoline):
-LRESULT CALLBACK MainWindow::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK MainWindow::OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     MainWindow* pThis = nullptr;
 
     if (uMsg == WM_NCCREATE) {
@@ -126,14 +126,15 @@ LRESULT CALLBACK MainWindow::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wPara
 LRESULT MainWindow::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_CREATE: {
-        OnCreate(hWnd, reinterpret_cast<LPCREATESTRUCT>(lParam));
+        if (!OnCreate(hWnd, reinterpret_cast<LPCREATESTRUCT>(lParam))) {
+            DestroyWindow(hWnd);
+            return -1; // Indicate failure to create the window
+        }
         return 0;
     }
     case WM_COMMAND: {
-        switch (LOWORD(wParam)) {
-        case static_cast<UINT>(ChildWindowIDs::Exit):
+        if (static_cast<UINT>(ChildWindowIDs::Exit) == LOWORD(wParam)) {
             DestroyWindow(hWnd);
-            break;
         }
         return 0;
     }
@@ -155,7 +156,7 @@ LRESULT MainWindow::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_NOTIFY: {
         LPNMHDR lpnmh = reinterpret_cast<LPNMHDR>(lParam);
         if (mFileView && lpnmh->hwndFrom == mFileView->GetHWND() && lpnmh->code == TVN_SELCHANGED) {
-            // Placeholder for file selection logic.
+            // TODO Placeholder for file selection logic.
         }
         return 0;
     }
@@ -171,7 +172,7 @@ LRESULT MainWindow::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 // Handles the WM_CREATE message: This is where child view components and other UI elements are
 // created.
-void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
+bool MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     INITCOMMONCONTROLSEX icex{};
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC = ICC_TREEVIEW_CLASSES | ICC_STANDARD_CLASSES;
@@ -180,15 +181,15 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     // --- Create the Menu Bar ---
     HMENU hMenuBar = CreateMenu();
     if (hMenuBar == nullptr) {
-        DEBUGPRINT(L"ERROR: Failed to create menu bar!\n");
-        return;
+        DEBUG_ERROR(L"Failed to create menu bar!\n");
+        return false;
     }
 
     HMENU hSceneMenu = CreatePopupMenu();
     if (hSceneMenu == nullptr) {
-        DEBUGPRINT(L"ERROR: Failed to create scene menu!\n");
+        DEBUG_ERROR(L"Failed to create scene menu!\n");
         DestroyMenu(hMenuBar);
-        return;
+        return false;
     }
 
     AppendMenuW(hSceneMenu, MF_STRING, static_cast<UINT>(ChildWindowIDs::Exit), L"E&xit");
@@ -199,60 +200,94 @@ void MainWindow::OnCreate(HWND hWnd, LPCREATESTRUCT pcs) {
     mFileProvider = std::make_unique<WorkingDirFileProvider>();
 
     mFileView = std::make_unique<FileView>(*mFileProvider);
-    if (mFileView)
-        mFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView));
+    if (!mFileView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::FileView))) {
+        DEBUG_ERROR(L"Failed to create FileView!\n");
+        return false;
+    }
 
     mSceneView = std::make_unique<SceneView>();
-    if (mSceneView)
-        mSceneView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneView));
+    if (!mSceneView->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneView))) {
+        DEBUG_ERROR(L"Failed to create SceneView!\n");
+        return false;
+    }
 
     mSceneTree = std::make_unique<SceneTree>();
-    if (mSceneTree)
-        mSceneTree->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneTree));
+    if (!mSceneTree->Create(hWnd, static_cast<UINT>(ChildWindowIDs::SceneTree))) {
+        DEBUG_ERROR(L"Failed to create SceneTree!\n");
+        return false;
+    }
 
     // Create the fixed splitter controls as simple static rectangles.
     // They are now purely visual separators and don't handle mouse input.
     HMENU splitter1Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter1));
     mHwndSplitter1 = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_GRAYRECT, 0, 0, 0,
                                     0, hWnd, splitter1Id, mHInstance, nullptr);
-    if (!mHwndSplitter1)
-        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter1!\n");
+    if (!mHwndSplitter1) {
+        DEBUG_ERROR(L"Failed to create m_hwndSplitter1!\n");
+        return false;
+    }
 
     HMENU splitter2Id = reinterpret_cast<HMENU>(static_cast<UINT_PTR>(ChildWindowIDs::Splitter2));
     mHwndSplitter2 = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE | SS_GRAYRECT, 0, 0, 0,
                                     0, hWnd, splitter2Id, mHInstance, nullptr);
-    if (!mHwndSplitter2)
-        DEBUGPRINT(L"ERROR: Failed to create m_hwndSplitter2!\n");
+    if (!mHwndSplitter2) {
+        DEBUG_ERROR(L"Failed to create m_hwndSplitter2!\n");
+        return false;
+    }
 
     // Perform initial layout after all controls are created.
     RECT rcClient;
     GetClientRect(hWnd, &rcClient);
     OnSize(rcClient.right, rcClient.bottom); // This calls LayoutChildViews
+    return true;
+}
+
+void MainWindow::Destroy() {
+    // Destroy the child views. We have to get the raw pointers to deduce to BaseView.
+    std::initializer_list<BaseView*> views = {mFileView.get(), mSceneTree.get(), mSceneView.get()};
+
+    for (BaseView* view : views) {
+        if (view) {
+            view->Destroy();
+        }
+    }
+
+    // Destroy the main window.
+    if (mHWnd) {
+        DestroyWindow(mHWnd);
+        mHWnd = nullptr;
+    }
 }
 
 int MainWindow::Run() {
     MSG msg = {};
-    while (msg.message != WM_QUIT && OnUpdate()) {
+    while (mIsRunning && OnUserInput()) {
+
+        // Windows message loop: This retrieves messages from the message queue and dispatches them
+        // to the
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                break;
-            }
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+
+            if (msg.message == WM_QUIT) {
+                mIsRunning = false;
+                break;
+            }
+        }
+
+        // Rendering part
+        if (mIsRunning) {
+            // TODO: Update the state of the application, camera, etc.
+
+            // Draw the scene using the GraphicsContext
+            mGraphicsContext->Draw(*mCamera);
         }
     }
     return (msg.message == WM_QUIT) ? static_cast<int>(msg.wParam) : 0;
 }
 
-bool MainWindow::OnUpdate() {
-    // TODO Handle user input
-    // TODO update the state/camera
-
-    // Draw the scene
-    if (mSceneView) {
-        mSceneView->OnUpdate();
-    }
-
+bool MainWindow::OnUserInput() {
+    // TODO: Handle user input, return false on exit
     return true;
 }
 

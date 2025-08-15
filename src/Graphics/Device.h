@@ -1,19 +1,44 @@
 ﻿//
 // Created by dtcimbal on 27/07/2025.
 #pragma once
-#include <Windows.h>
 #include <memory>
+#include "CommandAllocator.h"
+#include "CommandQueue.h"
+#include "DebugLayer.h"
+#include "Includes/DXInclude.h"
+#include "Includes/WindowsInclude.h" // for HWND
 
-#include "Renderer.h"
+class Camera;
 
 class Device {
 
   public:
-    Device(HWND hWnd) : mHwnd(hWnd) {};
-    ~Device() = default;
+    static bool Create(D3D_FEATURE_LEVEL FeatureLevel,
+                       bool IsHardwareDevice,
+                       bool HasMaxVideoMemory,
+                       std::unique_ptr<Device>& OutDevice);
 
-    bool CreateRenderer(std::unique_ptr<Renderer>& OutRenderer);
+    bool CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE Type,
+                                D3D12_COMMAND_LIST_FLAGS Flags,
+                                std::unique_ptr<CommandAllocator>& OutAllocator);
+
+    bool CreateCommandQueue(D3D12_COMMAND_LIST_TYPE Type,
+                            D3D12_COMMAND_QUEUE_PRIORITY Priority,
+                            D3D12_COMMAND_QUEUE_FLAGS Flags,
+                            std::unique_ptr<CommandQueue>& OutQueue);
+
+    Device(Microsoft::WRL::ComPtr<IDXGIFactory7>&& DxgiFactory,
+           Microsoft::WRL::ComPtr<ID3D12Device14> D3dDevice)
+        : mDxgiFactory(std::move(DxgiFactory)), mD3dDevice(std::move(D3dDevice)) {};
+    ~Device() {
+        DEBUG_INFO(L"Freeing Device.\n");
+    };
+
+    // Deleted copy constructor and assignment operator to prevent copying
+    Device(Device& copy) = delete;
+    Device& operator=(const Device& copy) = delete;
 
   private:
-    HWND mHwnd;
+    Microsoft::WRL::ComPtr<IDXGIFactory7> mDxgiFactory;
+    Microsoft::WRL::ComPtr<ID3D12Device14> mD3dDevice;
 };

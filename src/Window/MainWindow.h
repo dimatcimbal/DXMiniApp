@@ -2,18 +2,17 @@
 // Created by dtcimbal on 2/06/2025.
 #pragma once
 
-#include <Windows.h>
 #include <memory> // For std::unique_ptr
 #include <string> // For std::wstring
+#include "Includes/WindowsInclude.h"
 
 #include "Files/BaseFileProvider.h"
 #include "Scene/Camera.h"
 
-// Forward declarations for view component classes
-// This is a good practice to avoid circular dependencies and speed up compilation.
-class FileView;
-class SceneTree;
-class SceneView;
+#include <Graphics/GraphicsContext.h>
+#include "Window/FileView.h"
+#include "Window/SceneTree.h"
+#include "Window/SceneView.h"
 
 // Define unique IDs for child windows and menu items using an enum class for strong typing.
 // These IDs are shared between MainWindow and the views.
@@ -35,47 +34,38 @@ const static int DEFAULT_WINDOW_HEIGHT = 720;
 
 class MainWindow {
   public:
-    // Constructor and Destructor
-    MainWindow();
-    ~MainWindow();
+    // Static factory method to create and initialize a MainWindow instance.
+    static bool MainWindow::Create(std::unique_ptr<MainWindow>& OutWindow);
+
+    // Constructor/Destructor
+    MainWindow()
+        : mHWnd(nullptr), mHwndSplitter1(nullptr), mHwndSplitter2(nullptr),
+          mHInstance(GetModuleHandle(nullptr)) {
+    }
+    ~MainWindow() = default;
+
+    // --- Public helper methods (exposed for friend or if other parts of the app need to trigger
+    // layout) --- Recalculates and sets the positions of all child views based on current window
+    // size and pane proportions.
+    void LayoutChildViews(int clientWidth, int clientHeight);
+
+    // Destroys the main window and cleans up resources.
+    void Destroy();
+
+    /**
+     * Main blocking application loop. Does message processing and handles rendering.
+     * @return
+     */
+    int Run();
 
     // Accessor for the main window handle
     HWND GetHWND() const {
         return mHWnd;
     }
 
-    // --- Public members for SplitterProc access (declared public due to friend, could be private
-    // with accessors) --- Last known mouse X position during a splitter drag operation
-    int mLastMouseX;
-    // Tracks which splitter is being dragged (0: none, 1: splitter1, 2: splitter2)
-    int mDraggingSplitter;
-    // Handles for the splitter bar windows
-    HWND mHwndSplitter1;
-    HWND mHwndSplitter2;
-    // Proportions of the three main panes (FileView, SceneView, SceneTree)
-    // Normalized so their sum is typically 1.0f.
-    float mPaneProportions[3];
-
-    // --- Public helper methods (exposed for friend or if other parts of the app need to trigger
-    // layout) --- Recalculates and sets the positions of all child views based on current window
-    // size and pane proportions.
-    void LayoutChildViews(int clientWidth, int clientHeight);
-    int Run();
-
   private:
-    // Internal application update call
-    bool OnUpdate();
-
-    // Main application window handle
-    HWND mHWnd;
-    // Instance handle for the application, obtained during creation.
-    HINSTANCE mHInstance;
-
-    // Smart pointers to manage the lifetime of our view components.
-    std::unique_ptr<FileView> mFileView;
-    std::unique_ptr<SceneTree> mSceneTree;
-    std::unique_ptr<SceneView> mSceneView;
-    std::unique_ptr<BaseFileProvider> mFileProvider;
+    // Internal method to handle user input.
+    bool OnUserInput();
 
     // --- Private helper methods for window management ---
     // Registers the window class for the main application window.
@@ -91,19 +81,35 @@ class MainWindow {
     // --- Static and Instance-Specific Window Procedures ---
     // The static Window Procedure (trampoline) that dispatches messages to the correct MainWindow
     // instance.
-    static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     // The instance-specific message handler where most of the window's message processing logic
     // resides.
     LRESULT HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     // --- Message Handlers ---
     // Handles the WM_CREATE message, typically used for creating child windows and initializing UI.
-    void OnCreate(HWND hWnd, LPCREATESTRUCT pcs);
+    bool OnCreate(HWND hWnd, LPCREATESTRUCT pcs);
+
     // Handles the WM_SIZE message, used for resizing and repositioning child windows.
     void OnSize(int clientWidth, int clientHeight);
 
-    // Declare the global/static SplitterProc function as a friend to allow it to access
-    // private/protected members of MainWindow (like m_lastMouseX, m_draggingSplitter,
-    // m_paneProportions).
-    friend LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+  private:
+    bool mIsRunning{true};
+  
+    HWND mHWnd;
+    // Handles for the splitter bar windows
+    HWND mHwndSplitter1;
+    HWND mHwndSplitter2;
+
+    // Instance handle for the application, obtained during creation.
+    HINSTANCE mHInstance;
+
+    // Smart pointers to manage the lifetime of our view components.
+    std::unique_ptr<FileView> mFileView;
+    std::unique_ptr<SceneTree> mSceneTree;
+    std::unique_ptr<SceneView> mSceneView;
+    std::unique_ptr<BaseFileProvider> mFileProvider;
+
+    std::unique_ptr<Camera> mCamera;
+    std::unique_ptr<GraphicsContext> mGraphicsContext;
 };
