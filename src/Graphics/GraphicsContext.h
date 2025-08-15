@@ -37,16 +37,14 @@ class Camera;
  */
 class GraphicsContext {
   public:
-    static bool Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutContext);
+    static bool Create(std::unique_ptr<GraphicsContext>& OutContext);
 
-    GraphicsContext(HWND hWnd,
-                    std::unique_ptr<CommandAllocator> CommandAllocator,
+    GraphicsContext(std::unique_ptr<CommandAllocator> CommandAllocator,
                     std::unique_ptr<CommandQueue> CommandQueue,
                     std::unique_ptr<DebugLayer>&& DebugLayer,
                     std::unique_ptr<Device>&& Device)
-        : mHWnd(hWnd), mCommandAllocator(std::move(CommandAllocator)),
-          mCommandQueue(std::move(CommandQueue)), mDebugLayer(std::move(DebugLayer)),
-          mDevice(std::move(Device)) {};
+        : mCommandAllocator(std::move(CommandAllocator)), mCommandQueue(std::move(CommandQueue)),
+          mDebugLayer(std::move(DebugLayer)), mDevice(std::move(Device)) {};
     ~GraphicsContext() {
         // Free up mCommandAllocator.
         mCommandAllocator.reset();
@@ -74,5 +72,4 @@ class GraphicsContext {
     std::unique_ptr<CommandAllocator> mCommandAllocator;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<Device> mDevice;
-    HWND mHWnd;
 };

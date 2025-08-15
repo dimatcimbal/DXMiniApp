@@ -1,6 +1,6 @@
 #include "GraphicsContext.h"
 
-bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutContext) {
+bool GraphicsContext::Create(std::unique_ptr<GraphicsContext>& OutContext) {
 
     std::unique_ptr<DebugLayer> DebugLayer;
     if (!DebugLayer::Create(DebugLayer)) {
@@ -32,9 +32,9 @@ bool GraphicsContext::Create(HWND hWnd, std::unique_ptr<GraphicsContext>& OutCon
         return false;
     }
 
-    OutContext = std::make_unique<GraphicsContext>(hWnd, std::move(CommandAllocator),
-                                                   std::move(CommandQueue), std::move(DebugLayer),
-                                                   std::move(Device));
+    OutContext =
+        std::make_unique<GraphicsContext>(std::move(CommandAllocator), std::move(CommandQueue),
+                                          std::move(DebugLayer), std::move(Device));
     return true;
 }
 

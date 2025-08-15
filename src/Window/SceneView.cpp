@@ -7,7 +7,6 @@
 
 #include "Common/Debug.h" // For DEBUGPRINT
 #include "Graphics/Device.h"
-#include "Scene/Camera.h"
 
 SceneView::SceneView() = default;
 
@@ -65,7 +64,6 @@ LRESULT SceneView::HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_PAINT: {
         PAINTSTRUCT ps;
         BeginPaint(hWnd, &ps);
-        OnUpdate();
         EndPaint(hWnd, &ps);
         return 0;
     }
@@ -117,14 +115,7 @@ bool SceneView::OnCreate(HWND hParent, UINT id) {
     int width = clientRect.right - clientRect.left;
     int height = clientRect.bottom - clientRect.top;
 
-    mCamera = std::make_unique<Camera>();
-
-    if (!GraphicsContext::Create(mHWnd, mGraphicsContext)) {
-        DEBUG_ERROR(L"Failed to initialize a Device.\n");
-        return false;
-    }
-
-    mGraphicsContext->OnResize(width, height);
+    DEBUG_INFO(L"SceneView created as %d x %d", width, height);
     return true;
 }
 
@@ -136,13 +127,5 @@ void SceneView::OnDestroy() {
 
 // Handles WM_SIZE messages for the SceneView window.
 void SceneView::OnResize(int Width, int Height) const {
-    if (mGraphicsContext && Width > 0 && Height > 0) {
-        mGraphicsContext->OnResize(Width, Height);
-    }
-}
-
-void SceneView::OnUpdate() const {
-    if (mGraphicsContext && mCamera) {
-        mGraphicsContext->Draw(*mCamera);
-    }
+    DEBUG_INFO(L"SceneView resized to %d x %d", Width, Height);
 }

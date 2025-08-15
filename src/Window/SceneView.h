@@ -7,10 +7,6 @@
 #include <Graphics/GraphicsContext.h>
 #include <memory>
 
-class Camera;
-class Device;
-class Renderer;
-
 // Define a unique class name for the SceneView window
 const static LPCWSTR SCENE_VIEW_CLASS_NAME = L"DXMiniAppSceneView";
 
@@ -23,7 +19,6 @@ class SceneView : public BaseView {
     bool OnCreate(HWND hParent, UINT id) override;
     void OnDestroy() override;
     void OnResize(int Width, int Height) const;
-    void OnUpdate() const;
 
     // Private methods
   private:
@@ -40,7 +35,5 @@ class SceneView : public BaseView {
 
     // Private instance values
   private:
-    std::unique_ptr<GraphicsContext> mGraphicsContext;
-    std::unique_ptr<Camera> mCamera;
     ATOM mAtom{0};
 };

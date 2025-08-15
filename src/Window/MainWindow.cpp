@@ -8,8 +8,6 @@
 #include "FileView.h" // Include definitions for view component classes
 #include "MainWindow.h"
 
-#include <sstream>
-
 #include "Common/Debug.h"
 #include "Files/WorkingDirFileProvider.h"
 #include "SceneTree.h"
@@ -17,32 +15,28 @@
 
 // Anonymous namespace for constants internal to this compilation unit
 namespace {
-const int SPLITTER_WIDTH = 5; // Thickness of the splitter bars in pixels
+constexpr int SPLITTER_WIDTH = 5; // Thickness of the splitter bars in pixels
 } // anonymous namespace
 
-// Constructor: Initializes members and performs window class registration and main window creation.
-MainWindow::MainWindow()
-    : mHWnd(nullptr), mHwndSplitter1(nullptr), mHwndSplitter2(nullptr),
-      mHInstance(GetModuleHandle(nullptr)) {
-    // No pane proportions needed for fixed splitters; layout will be hardcoded.
+// Static Factory Method: Creates and initializes a MainWindow instance.
+// Returns a unique_ptr to the new MainWindow, or nullptr on failure.
+bool MainWindow::Create(std::unique_ptr<MainWindow>& OutWindow) {
+    auto window = std::make_unique<MainWindow>();
 
-    // Register the main window class. If registration fails, an error is logged.
-    if (!RegisterWindowClass()) {
+    // Register the main window class.
+    if (!window->RegisterWindowClass()) {
         DEBUG_ERROR(L"Failed to register main window class!\n");
-        return;
+        return false;
     }
 
-    // Create the main application window. If creation fails, an error is logged.
-    if (!CreateMainWindow()) {
+    // Create the main application window.
+    if (!window->CreateMainWindow()) {
         DEBUG_ERROR(L"Failed to create main window!\n");
-        return;
+        return false;
     }
-}
 
-// Destructor: Cleans up resources.
-MainWindow::~MainWindow() {
-    // No explicit cleanup for HWNDs or unique_ptrs needed here due to RAII and Windows' message
-    // loop.
+    OutWindow = std::move(window);
+    return true;
 }
 
 // Registers the window class for the main application window.
@@ -93,6 +87,12 @@ bool MainWindow::CreateMainWindow() {
 
     if (mHWnd == nullptr) {
         DEBUG_ERROR(L"CreateWindowEx failed. Error: %s", std::to_wstring(GetLastError()).c_str());
+        return false;
+    }
+
+    // Create Graphics context
+    if (!GraphicsContext::Create(mGraphicsContext)) {
+        DEBUG_ERROR(L"Failed to create GraphicsContext.\n");
         return false;
     }
 
@@ -261,27 +261,33 @@ void MainWindow::Destroy() {
 
 int MainWindow::Run() {
     MSG msg = {};
-    while (msg.message != WM_QUIT && OnUpdate()) {
+    while (mIsRunning && OnUserInput()) {
+
+        // Windows message loop: This retrieves messages from the message queue and dispatches them
+        // to the
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                break;
-            }
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+
+            if (msg.message == WM_QUIT) {
+                mIsRunning = false;
+                break;
+            }
+        }
+
+        // Rendering part
+        if (mIsRunning) {
+            // TODO: Update the state of the application, camera, etc.
+
+            // Draw the scene using the GraphicsContext
+            mGraphicsContext->Draw(*mCamera);
         }
     }
     return (msg.message == WM_QUIT) ? static_cast<int>(msg.wParam) : 0;
 }
 
-bool MainWindow::OnUpdate() {
-    // TODO Handle user input
-    // TODO update the state/camera
-
-    // Draw the scene
-    if (mSceneView) {
-        mSceneView->OnUpdate();
-    }
-
+bool MainWindow::OnUserInput() {
+    // TODO: Handle user input, return false on exit
     return true;
 }
 
